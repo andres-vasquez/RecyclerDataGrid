@@ -15,8 +15,6 @@ import android.widget.LinearLayout;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
-import org.greenrobot.eventbus.EventBus;
-
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -25,6 +23,7 @@ import java.util.Map;
 
 import io.github.andres_vasquez.recyclerdatagrid.R;
 import io.github.andres_vasquez.recyclerdatagrid.controller.listener.ScrollManager;
+import io.github.andres_vasquez.recyclerdatagrid.models.appClasses.CellProperties;
 import io.github.andres_vasquez.recyclerdatagrid.models.appClasses.ColumnItem;
 import io.github.andres_vasquez.recyclerdatagrid.models.appClasses.DataGridItem;
 import io.github.andres_vasquez.recyclerdatagrid.models.events.HeaderOrderEvent;
@@ -52,6 +51,7 @@ public class DataGridFragmentFragment extends DataGridPropertiesFragment
     private LinearLayoutManager linearLayoutManager;
 
     //Columns and order
+    private Map<String,ColumnItem> mapColumns;
     private List<ColumnItem> columns;
     private String uniqueColumnKey;
 
@@ -88,6 +88,9 @@ public class DataGridFragmentFragment extends DataGridPropertiesFragment
 
                     Type listType = new TypeToken<ArrayList<ColumnItem>>(){}.getType();
                     columns = gson.fromJson(args.getString(Constants.EXTRA_COLUMNS), listType);
+
+                    //Change to map
+                    mapColumns=getColumnsInMap();
                 }
                 catch (Exception e){
                     Log.e("Exception",""+e.getMessage());
@@ -138,7 +141,7 @@ public class DataGridFragmentFragment extends DataGridPropertiesFragment
         ScrollNotifier headerView = (ScrollNotifier) headerDynamic.findViewById(R.id.scroll);
         scrollManager.addScrollClient(headerView);
 
-        horizontalAdapter=new HorizontalAdapter(mActivity,scrollManager,getColumnsInMap());
+        horizontalAdapter=new HorizontalAdapter(mActivity,scrollManager,mapColumns);
         horizontalAdapter.setOnItemClickListener(this);
 
         recyclerView.setAdapter(horizontalAdapter);
@@ -158,9 +161,7 @@ public class DataGridFragmentFragment extends DataGridPropertiesFragment
         Map<String, ColumnItem> columnItemMap=new LinkedHashMap<>();
         if(columns!=null){
             for(ColumnItem columnItem : columns){
-                if(columnItem.getTitle().compareTo(uniqueColumnKey)==0){
-                    columnItemMap.put(columnItem.getTitle(),columnItem);
-                }
+                columnItemMap.put(columnItem.getTitle(),columnItem);
             }
         }
         return columnItemMap;
@@ -200,9 +201,14 @@ public class DataGridFragmentFragment extends DataGridPropertiesFragment
                 defaultOrder=orderType;
             }
 
+            CellProperties cellProperties=column.getCellProperties();
+            if(cellProperties==null){
+                cellProperties=horizontalAdapter.getDefaultCellProperties();
+            }
+
             LinearLayout ly;
             ly=templates.textFieldOrder(column.getTitle(),
-                    horizontalAdapter.getCellWidth(),column.getTitle(),defaultOrder);
+                    cellProperties.getWidth(),column.getTitle(),defaultOrder);
             lyColumns.addView(ly);
             lstHeaderOrderEvent.add(new HeaderOrderEvent(lstHeaderOrderEvent.size()+1,
                     column.getTitle(),defaultOrder,ly));
@@ -218,10 +224,15 @@ public class DataGridFragmentFragment extends DataGridPropertiesFragment
             headerOrderEvent.getHeader().setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    EventBus.getDefault().post(new HeaderOrderEvent(
+                    HeaderOrderEvent(new HeaderOrderEvent(
+                                    headerOrderEvent.getPosition(),
+                                    headerOrderEvent.getColumn(),
+                                    headerOrderEvent.getOrderType()));
+
+                    /*EventBus.getDefault().post(new HeaderOrderEvent(
                             headerOrderEvent.getPosition(),
                             headerOrderEvent.getColumn(),
-                            headerOrderEvent.getOrderType()));
+                            headerOrderEvent.getOrderType()));*/
                 }
             });
         }
@@ -257,6 +268,34 @@ public class DataGridFragmentFragment extends DataGridPropertiesFragment
 
     @Override
     public void onItemClick(DataGridItem globalTagItem, int position) {
+
+    }
+
+
+    public void HeaderOrderEvent(HeaderOrderEvent event) {
+        columnOrder=event.getColumn();
+
+        switch (event.getOrderType()){
+            case Constants.ORDER_ASC:
+                orderType=Constants.ORDER_DESC;
+                break;
+            case Constants.ORDER_DESC:
+                orderType=Constants.ORDER_ASC;
+                break;
+            case Constants.NO_ORDER:
+                orderType=Constants.ORDER_ASC;
+                break;
+            default:
+                orderType=Constants.ORDER_ASC;
+                break;
+        }
+
+        //Update Column headers only
+        fillColumnsHeaders();
+        horizontalAdapter.applyOrderFilter(columnOrder,orderType);
+    }
+
+    public void showColumnsPickUpDialog() {
 
     }
 }

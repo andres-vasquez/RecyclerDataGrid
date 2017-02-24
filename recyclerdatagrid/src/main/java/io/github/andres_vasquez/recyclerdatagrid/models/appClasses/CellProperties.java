@@ -10,6 +10,13 @@ public class CellProperties {
     private int textSize;
     private int gravity;
 
+    public CellProperties(int width, int textColor, int textSize, int gravity) {
+        this.width = width;
+        this.textColor = textColor;
+        this.textSize = textSize;
+        this.gravity = gravity;
+    }
+
     public int getWidth() {
         return width;
     }

@@ -1,19 +1,24 @@
 package io.github.andres_vasquez.examplerecyclerdatagrid;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AppCompatActivity;
+import android.view.Gravity;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.FrameLayout;
+import android.widget.ImageView;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
+import io.github.andres_vasquez.recyclerdatagrid.models.appClasses.CellProperties;
 import io.github.andres_vasquez.recyclerdatagrid.models.appClasses.ColumnItem;
 import io.github.andres_vasquez.recyclerdatagrid.models.appClasses.DataGridProperties;
 import io.github.andres_vasquez.recyclerdatagrid.ui.fragments.DataGridFragmentFragment;
@@ -21,6 +26,10 @@ import io.github.andres_vasquez.recyclerdatagrid.ui.fragments.DataGridFragmentFr
 public class MainActivity extends AppCompatActivity implements View.OnClickListener{
 
     private Context mContext;
+
+    private ImageView mFilterRowsImageView;
+    private ImageView mFilterColumnsImageView;
+    private EditText mSearchEditText;
 
     private Button mAddOneButton;
     private Button mAddMultipleButton;
@@ -51,13 +60,22 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         lstColumns=new ArrayList<>();
 
         //Adding click events
+        //Filters
+        mFilterRowsImageView.setOnClickListener(this);
+        mFilterColumnsImageView.setOnClickListener(this);
+
+        //Bottom bar
         mAddOneButton.setOnClickListener(this);
         mAddMultipleButton.setOnClickListener(this);
+
 
         mDataGridFragment =new DataGridFragmentFragment();
 
         //FillBase colunns
-        lstColumns.add(new ColumnItem(1,"Column1"));
+        ColumnItem columnItem1=new ColumnItem(1,"Column1");
+        columnItem1.setCellProperties(new CellProperties(200, Color.RED, 10, Gravity.RIGHT));
+
+        lstColumns.add(columnItem1);
         lstColumns.add(new ColumnItem(2,"Column2"));
         lstColumns.add(new ColumnItem(3,"Column3"));
         lstColumns.add(new ColumnItem(4,"Column4"));
@@ -82,15 +100,29 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
      * Init Visual components
      */
     private void initViews(){
+        //Top bar
+        mFilterRowsImageView=(ImageView)findViewById(R.id.filter_rows_imageview);
+        mFilterColumnsImageView=(ImageView)findViewById(R.id.filter_columns_imageview);
+        mSearchEditText=(EditText)findViewById(R.id.search_edittext);
+
+        //Datagrid fragment
+        frameLayout=(FrameLayout)findViewById(R.id.frameLayout);
+
+        //Bottom Bar
         mAddOneButton=(Button)findViewById(R.id.add_one_button);
         mAddMultipleButton=(Button)findViewById(R.id.add_multiple_button);
         mSimulatorNumerEditText=(EditText)findViewById(R.id.simulator_number_editext);
-        frameLayout=(FrameLayout)findViewById(R.id.frameLayout);
     }
 
     @Override
     public void onClick(View view) {
         switch (view.getId()){
+            case R.id.imgFilterRows:
+
+                break;
+            case R.id.imgFilterColumns:
+                mDataGridFragment.showColumnsPickUpDialog();
+                break;
             case R.id.add_one_button:
                 addOne();
                 break;
@@ -102,14 +134,26 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
+    /**
+     * Add one Cell
+     */
     private void addOne(){
-        int newCount=mActualCount+1;
+        Random r = new Random();
+        int Low = 0;
+        int High = 1000;
+        int random = 0;
+
         Map<String,Object> mapRow=new LinkedHashMap<>();
-        mapRow.put(COLUMN_KEY_1,"Cell 1."+newCount);
-        mapRow.put(COLUMN_KEY_2,"Cell 2."+newCount);
-        mapRow.put(COLUMN_KEY_3,"Cell 3."+newCount);
-        mapRow.put(COLUMN_KEY_4,"Cell 4."+newCount);
-        mapRow.put(COLUMN_KEY_5,"Cell 5."+newCount);
+        random=r.nextInt(High-Low) + Low;
+        mapRow.put(COLUMN_KEY_1,"Data "+random);
+        random=r.nextInt(High-Low) + Low;
+        mapRow.put(COLUMN_KEY_2,"Data "+random);
+        random=r.nextInt(High-Low) + Low;
+        mapRow.put(COLUMN_KEY_3,"Data "+random);
+        random=r.nextInt(High-Low) + Low;
+        mapRow.put(COLUMN_KEY_4,"Data "+random);
+        random=r.nextInt(High-Low) + Low;
+        mapRow.put(COLUMN_KEY_5,"Data "+random);
         mDataGridFragment.addRow(mapRow);
     }
 }

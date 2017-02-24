@@ -1,6 +1,7 @@
 package io.github.andres_vasquez.recyclerdatagrid.ui.adapters;
 
 import android.app.Activity;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.graphics.Color;
 import android.support.v7.widget.RecyclerView;
@@ -24,6 +25,7 @@ import io.github.andres_vasquez.recyclerdatagrid.controller.listener.ScrollManag
 import io.github.andres_vasquez.recyclerdatagrid.models.appClasses.CellProperties;
 import io.github.andres_vasquez.recyclerdatagrid.models.appClasses.ColumnItem;
 import io.github.andres_vasquez.recyclerdatagrid.models.appClasses.DataGridItem;
+import io.github.andres_vasquez.recyclerdatagrid.models.interfaces.LoadInterface;
 import io.github.andres_vasquez.recyclerdatagrid.models.interfaces.ScrollNotifier;
 import io.github.andres_vasquez.recyclerdatagrid.ui.views.CustomTemplates;
 import io.github.andres_vasquez.recyclerdatagrid.utils.ComparatorItems;
@@ -54,6 +56,7 @@ public class HorizontalAdapter extends RecyclerView.Adapter<HorizontalAdapter.It
     public boolean isFilterActive() {
         return filterActive;
     }
+    private ProgressDialog progressDialog;
 
     public HorizontalAdapter(Activity activity, ScrollManager mScrollManager,
                              Map<String,ColumnItem> mapColumns){
@@ -105,10 +108,15 @@ public class HorizontalAdapter extends RecyclerView.Adapter<HorizontalAdapter.It
                     cellProperties=getDefaultCellProperties();
                 }
 
-                textView=templates.textField(mEntry.getValue().toString(),cellProperties.getWidth());
-                textView.setGravity(cellProperties.getGravity());
-                textView.setTextColor(cellProperties.getTextColor());
-                textView.setTextSize(cellProperties.getTextSize());
+                try {
+                    textView=templates.textField(mEntry.getValue().toString(),cellProperties.getWidth());
+                    textView.setGravity(cellProperties.getGravity());
+                    textView.setTextColor(cellProperties.getTextColor());
+                    textView.setTextSize(cellProperties.getTextSize());
+                }catch (NullPointerException ex){
+                    textView=templates.textField(mEntry.getValue().toString(),cellProperties.getWidth());
+                }
+
 
                 ViewGroup parent = (ViewGroup) textView.getParent();
                 if (parent != null) {
@@ -154,6 +162,19 @@ public class HorizontalAdapter extends RecyclerView.Adapter<HorizontalAdapter.It
         return onItemClickListener;
     }
 
+    public void applyOrderFilter(String columnOrder, String orderType) {
+        this.mColumnOrder=columnOrder;
+        this.mOrderType=orderType;
+
+        showLoadingDialog();
+        mapOrderedList(new LoadInterface() {
+            @Override
+            public void onDataLoaded() {
+                hideLoadingDialog();
+            }
+        });
+    }
+
     public interface OnItemClickListener{
         public void onItemClick(DataGridItem globalTagItem, int position);
     }
@@ -170,7 +191,7 @@ public class HorizontalAdapter extends RecyclerView.Adapter<HorizontalAdapter.It
             notifyItemInserted(mItems.size()-1);
 
             if(!mColumnOrder.isEmpty()){
-                mapOrderedList();
+                mapOrderedList(null);
             } else {
                 mMapItems.put(item.getUniqueIdentificator(), mItems.size()-1);
             }
@@ -186,7 +207,7 @@ public class HorizontalAdapter extends RecyclerView.Adapter<HorizontalAdapter.It
         notifyItemInserted(mItems.size()-1);
 
         if(!mColumnOrder.isEmpty()){
-            mapOrderedList();
+            mapOrderedList(null);
         } else {
             mMapItems.put(item.getUniqueIdentificator(), mItems.size()-1);
         }
@@ -207,7 +228,7 @@ public class HorizontalAdapter extends RecyclerView.Adapter<HorizontalAdapter.It
                     mItems.get(position).setMapData(item.getMapData());
                     notifyItemChanged(position);
                     if(!mColumnOrder.isEmpty()) {
-                        mapOrderedList();
+                        mapOrderedList(null);
                     }
                 } else {
                     //Add to List if doesn't exists
@@ -225,7 +246,7 @@ public class HorizontalAdapter extends RecyclerView.Adapter<HorizontalAdapter.It
                 mItems.get(position).setMapData(item.getMapData());
                 notifyItemChanged(position);
                 if(!mColumnOrder.isEmpty()) {
-                    mapOrderedList();
+                    mapOrderedList(null);
                 }
             } else {
                 //Add to List if doesn't exists
@@ -246,7 +267,7 @@ public class HorizontalAdapter extends RecyclerView.Adapter<HorizontalAdapter.It
             mMapItems.remove(item.getUniqueIdentificator());
             notifyItemRemoved(position);
             if(!mColumnOrder.isEmpty()) {
-                mapOrderedList();
+                mapOrderedList(null);
             }
         }
     }
@@ -254,7 +275,7 @@ public class HorizontalAdapter extends RecyclerView.Adapter<HorizontalAdapter.It
     /**
      * Order items from datagrid
      */
-    private void mapOrderedList(){
+    private void mapOrderedList(LoadInterface callback){
         Collections.sort(mItems, new ComparatorItems(mColumnOrder, mOrderType));
         notifyItemRangeChanged(0, mItems.size());
 
@@ -263,6 +284,10 @@ public class HorizontalAdapter extends RecyclerView.Adapter<HorizontalAdapter.It
         for (DataGridItem item : mItems){
             mMapItems.put(item.getMapData(),position);
             position++;
+        }
+
+        if(callback!=null){
+            callback.onDataLoaded();
         }
     }
 
@@ -306,13 +331,47 @@ public class HorizontalAdapter extends RecyclerView.Adapter<HorizontalAdapter.It
         return width;
     }
 
-    private CellProperties getDefaultCellProperties(){
-        CellProperties cellProperties=new CellProperties();
-        cellProperties.setWidth(getCellWidth());
-        cellProperties.setGravity(Gravity.CENTER);
-        cellProperties.setTextColor(Color.BLACK);
-        cellProperties.setTextSize(16);
+    public CellProperties getDefaultCellProperties(){
+        CellProperties cellProperties=new CellProperties(getCellWidth(),
+                Color.BLACK,
+                16,
+                Gravity.CENTER);
         return cellProperties;
+    }
+
+    /**
+     * Show Progress Dialog
+     */
+    private void showLoadingDialog() {
+        mActivity.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if(progressDialog==null){
+                    progressDialog=new ProgressDialog(mContext);
+                    progressDialog.setMessage("Loading");
+                }
+
+                if(!progressDialog.isShowing()){
+                    progressDialog.show();
+                }
+            }
+        });
+    }
+
+    /**
+     * Show Progress Dialog
+     */
+    private void hideLoadingDialog(){
+        mActivity.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if(progressDialog!=null){
+                    if(!progressDialog.isShowing()){
+                        progressDialog.show();
+                    }
+                }
+            }
+        });
     }
 }
 
