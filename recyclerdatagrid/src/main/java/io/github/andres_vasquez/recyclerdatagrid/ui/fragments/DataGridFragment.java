@@ -1,8 +1,11 @@
 package io.github.andres_vasquez.recyclerdatagrid.ui.fragments;
 
 import android.app.Activity;
+import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.os.Bundle;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -27,17 +30,20 @@ import io.github.andres_vasquez.recyclerdatagrid.models.appClasses.CellPropertie
 import io.github.andres_vasquez.recyclerdatagrid.models.appClasses.ColumnItem;
 import io.github.andres_vasquez.recyclerdatagrid.models.appClasses.DataGridItem;
 import io.github.andres_vasquez.recyclerdatagrid.models.events.HeaderOrderEvent;
+import io.github.andres_vasquez.recyclerdatagrid.models.interfaces.FilterColumnInterface;
+import io.github.andres_vasquez.recyclerdatagrid.models.interfaces.LoadInterface;
 import io.github.andres_vasquez.recyclerdatagrid.models.interfaces.ScrollNotifier;
 import io.github.andres_vasquez.recyclerdatagrid.ui.adapters.HorizontalAdapter;
 import io.github.andres_vasquez.recyclerdatagrid.ui.views.CustomTemplates;
 import io.github.andres_vasquez.recyclerdatagrid.utils.Constants;
+import io.github.andres_vasquez.recyclerdatagrid.utils.GlobalFunctions;
 
 /**
  * Created by andresvasquez on 7/2/17.
  */
 
-public class DataGridFragmentFragment extends DataGridPropertiesFragment
-        implements HorizontalAdapter.OnItemClickListener {
+public class DataGridFragment extends DataGridPropertiesFragment
+        implements HorizontalAdapter.OnItemClickListener, LoadInterface {
 
     private Activity mActivity;
     private Context mContext;
@@ -66,6 +72,8 @@ public class DataGridFragmentFragment extends DataGridPropertiesFragment
     private LinearLayout headerDynamic;
     private LinearLayout lyColumns;
     private RecyclerView recyclerView;
+
+    private ProgressDialog progressDialog;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -225,9 +233,9 @@ public class DataGridFragmentFragment extends DataGridPropertiesFragment
                 @Override
                 public void onClick(View v) {
                     HeaderOrderEvent(new HeaderOrderEvent(
-                                    headerOrderEvent.getPosition(),
-                                    headerOrderEvent.getColumn(),
-                                    headerOrderEvent.getOrderType()));
+                            headerOrderEvent.getPosition(),
+                            headerOrderEvent.getColumn(),
+                            headerOrderEvent.getOrderType()));
 
                     /*EventBus.getDefault().post(new HeaderOrderEvent(
                             headerOrderEvent.getPosition(),
@@ -290,12 +298,127 @@ public class DataGridFragmentFragment extends DataGridPropertiesFragment
                 break;
         }
 
+        //Show loading dialog before apply changes
+        showLoadingDialog();
+
         //Update Column headers only
         fillColumnsHeaders();
-        horizontalAdapter.applyOrderFilter(columnOrder,orderType);
+        horizontalAdapter.applyOrderFilter(columnOrder,orderType,this);
     }
 
-    public void showColumnsPickUpDialog() {
+    public void showColumnsPickUpDialog(final FilterColumnInterface callback) {
+        final String[] arrPickerItems=new String[mapColumns.size()];
+        final boolean[] checked=new boolean[mapColumns.size()];
 
+        //Check items from list
+        int count=0;
+        for(Map.Entry<String,ColumnItem> column : mapColumns.entrySet()){
+            arrPickerItems[count]=column.getKey();
+            checked[count]=column.getValue().isSelected();
+            count++;
+        }
+
+        AlertDialog.Builder alert = new AlertDialog.Builder(mContext);
+        alert.setMultiChoiceItems(arrPickerItems, checked, new DialogInterface.OnMultiChoiceClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which, boolean isChecked) {
+                //Save changes in Map
+                if(mapColumns.containsKey(arrPickerItems[which])){
+                    ColumnItem columnItem=mapColumns.get(arrPickerItems[which]);
+                    columnItem.setSelected(isChecked);
+                }
+            }
+        });
+        alert.setPositiveButton(mContext.getString(R.string.done), new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                //Change map to list and execute callback
+                List<ColumnItem> lstColumnItems=new ArrayList<ColumnItem>();
+                for(Map.Entry<String,ColumnItem> columnItemEntry : mapColumns.entrySet()){
+                    lstColumnItems.add(columnItemEntry.getValue());
+                }
+
+                if(callback!=null){
+                    callback.onColumnsSelectedChanged(columns);
+                }
+            }
+        });
+        alert.setNegativeButton(mContext.getString(R.string.cancel), new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+
+            }
+        });
+        AlertDialog dialog=alert.create();
+        GlobalFunctions.fixDialogMarshmellow(dialog);
+        dialog.show();
+
+    }
+
+    public void applyColumnChanges(List<ColumnItem> newColumnsConfiguration) {
+        //Save in local variabless
+        columns=newColumnsConfiguration;
+        mapColumns=getColumnsInMap();
+
+        //Show loading diaglog before apply changes
+        showLoadingDialog();
+
+        //Verify ordered column is present in the columns filters
+        if(!columnOrder.isEmpty()){
+            if(mapColumns.containsKey(columnOrder)){
+                if(!mapColumns.get(columnOrder).isSelected()){
+                    //If ordered column is not present in columns remove filter
+                    columnOrder="";
+                    orderType=Constants.NO_ORDER;
+                    horizontalAdapter.removeOrderFilter();
+                }
+            }
+        }
+
+        //Change columns headers
+        fillColumnsHeaders();
+
+        //Update adapter with new info
+        horizontalAdapter.applyColumnsFilter(mapColumns,this);
+    }
+
+    @Override
+    public void onDataLoaded() {
+        hideLoadingDialog();
+    }
+
+    /**
+     * Show Progress Dialog
+     */
+    private void showLoadingDialog() {
+        mActivity.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if(progressDialog==null){
+                    progressDialog=new ProgressDialog(mContext);
+                    progressDialog.setMessage(mContext.getString(R.string.loading));
+                }
+
+                if(!progressDialog.isShowing()){
+                    progressDialog.show();
+                }
+            }
+        });
+    }
+
+    /**
+     * Show Progress Dialog
+     */
+    private void hideLoadingDialog(){
+        mActivity.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if(progressDialog!=null){
+                    if(progressDialog.isShowing()){
+                        progressDialog.hide();
+                    }
+                }
+            }
+        });
     }
 }

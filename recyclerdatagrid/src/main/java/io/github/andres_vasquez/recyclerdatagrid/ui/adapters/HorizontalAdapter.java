@@ -1,7 +1,6 @@
 package io.github.andres_vasquez.recyclerdatagrid.ui.adapters;
 
 import android.app.Activity;
-import android.app.ProgressDialog;
 import android.content.Context;
 import android.graphics.Color;
 import android.support.v7.widget.RecyclerView;
@@ -29,6 +28,7 @@ import io.github.andres_vasquez.recyclerdatagrid.models.interfaces.LoadInterface
 import io.github.andres_vasquez.recyclerdatagrid.models.interfaces.ScrollNotifier;
 import io.github.andres_vasquez.recyclerdatagrid.ui.views.CustomTemplates;
 import io.github.andres_vasquez.recyclerdatagrid.utils.ComparatorItems;
+import io.github.andres_vasquez.recyclerdatagrid.utils.Constants;
 
 /**
  * Created by avasquez on 6/23/2016.
@@ -56,7 +56,6 @@ public class HorizontalAdapter extends RecyclerView.Adapter<HorizontalAdapter.It
     public boolean isFilterActive() {
         return filterActive;
     }
-    private ProgressDialog progressDialog;
 
     public HorizontalAdapter(Activity activity, ScrollManager mScrollManager,
                              Map<String,ColumnItem> mapColumns){
@@ -103,33 +102,38 @@ public class HorizontalAdapter extends RecyclerView.Adapter<HorizontalAdapter.It
 
             //Fill cell proterties inside columns
             if(mMapColumns.containsKey(mEntry.getKey())){
-                CellProperties cellProperties=mMapColumns.get(mEntry.getKey()).getCellProperties();
-                if(cellProperties==null){
-                    cellProperties=getDefaultCellProperties();
+                if(mMapColumns.get(mEntry.getKey()).isSelected()){
+                    CellProperties cellProperties=mMapColumns.get(
+                            mEntry.getKey()).getCellProperties();
+                    if(cellProperties==null){
+                        cellProperties=getDefaultCellProperties();
+                    }
+
+                    try {
+                        textView=templates.textField(mEntry.getValue().toString(),
+                                cellProperties.getWidth());
+                        textView.setGravity(cellProperties.getGravity());
+                        textView.setTextColor(cellProperties.getTextColor());
+                        textView.setTextSize(cellProperties.getTextSize());
+                    }catch (NullPointerException ex){
+                        textView=templates.textField(mEntry.getValue().toString(),
+                                cellProperties.getWidth());
+                    }
+
+
+                    ViewGroup parent = (ViewGroup) textView.getParent();
+                    if (parent != null) {
+                        parent.removeView(textView);
+                    }
+
+                    // Add to another parent
+                    holder.lyColumns.addView(textView);
+
+                    if(count<item.getMapData().size()-1){
+                        holder.lyColumns.addView(templates.separatorLine());
+                    }
+                    count++;
                 }
-
-                try {
-                    textView=templates.textField(mEntry.getValue().toString(),cellProperties.getWidth());
-                    textView.setGravity(cellProperties.getGravity());
-                    textView.setTextColor(cellProperties.getTextColor());
-                    textView.setTextSize(cellProperties.getTextSize());
-                }catch (NullPointerException ex){
-                    textView=templates.textField(mEntry.getValue().toString(),cellProperties.getWidth());
-                }
-
-
-                ViewGroup parent = (ViewGroup) textView.getParent();
-                if (parent != null) {
-                    parent.removeView(textView);
-                }
-
-                // Add to another parent
-                holder.lyColumns.addView(textView);
-
-                if(count<item.getMapData().size()-1){
-                    holder.lyColumns.addView(templates.separatorLine());
-                }
-                count++;
             }
         }
 
@@ -162,18 +166,6 @@ public class HorizontalAdapter extends RecyclerView.Adapter<HorizontalAdapter.It
         return onItemClickListener;
     }
 
-    public void applyOrderFilter(String columnOrder, String orderType) {
-        this.mColumnOrder=columnOrder;
-        this.mOrderType=orderType;
-
-        showLoadingDialog();
-        mapOrderedList(new LoadInterface() {
-            @Override
-            public void onDataLoaded() {
-                hideLoadingDialog();
-            }
-        });
-    }
 
     public interface OnItemClickListener{
         public void onItemClick(DataGridItem globalTagItem, int position);
@@ -322,8 +314,7 @@ public class HorizontalAdapter extends RecyclerView.Adapter<HorizontalAdapter.It
     }
 
 
-
-    public int getCellWidth(){
+    private int getCellWidth(){
         Display display = mActivity.getWindowManager().getDefaultDisplay();
         int displayWidth = display.getWidth();
         int width=0;
@@ -332,46 +323,42 @@ public class HorizontalAdapter extends RecyclerView.Adapter<HorizontalAdapter.It
     }
 
     public CellProperties getDefaultCellProperties(){
-        CellProperties cellProperties=new CellProperties(getCellWidth(),
+        return new CellProperties(getCellWidth(),
                 Color.BLACK,
                 16,
                 Gravity.CENTER);
-        return cellProperties;
     }
 
     /**
-     * Show Progress Dialog
+     * Apply column order
+     * @param columnOrder Key of column to order
+     * @param orderType Tyoe of order ASC, DESC or NONE
+     * @param callback Callback after data loaded
      */
-    private void showLoadingDialog() {
-        mActivity.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                if(progressDialog==null){
-                    progressDialog=new ProgressDialog(mContext);
-                    progressDialog.setMessage("Loading");
-                }
-
-                if(!progressDialog.isShowing()){
-                    progressDialog.show();
-                }
-            }
-        });
+    public void applyOrderFilter(String columnOrder, String orderType, LoadInterface callback) {
+        this.mColumnOrder=columnOrder;
+        this.mOrderType=orderType;
+        mapOrderedList(callback);
     }
 
     /**
-     * Show Progress Dialog
+     * Remove order filter for adapter
      */
-    private void hideLoadingDialog(){
-        mActivity.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                if(progressDialog!=null){
-                    if(!progressDialog.isShowing()){
-                        progressDialog.show();
-                    }
-                }
-            }
-        });
+    public void removeOrderFilter(){
+        this.mColumnOrder="";
+        this.mOrderType= Constants.NO_ORDER;
+    }
+
+
+    /**
+     * Apply new columns configuration
+     * @param mapColumnsUpdated Columns Map
+     * @param callback Callback after data loaded
+     */
+    public void applyColumnsFilter(Map<String, ColumnItem> mapColumnsUpdated,LoadInterface callback) {
+        mMapColumns=mapColumnsUpdated;
+        notifyDataSetChanged();
+        callback.onDataLoaded();
     }
 }
 

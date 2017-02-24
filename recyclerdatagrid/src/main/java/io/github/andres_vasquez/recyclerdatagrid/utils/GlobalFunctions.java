@@ -2,9 +2,14 @@ package io.github.andres_vasquez.recyclerdatagrid.utils;
 
 import android.app.Activity;
 import android.content.Context;
+import android.os.Build;
+import android.support.v7.app.AlertDialog;
 import android.util.Log;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.AbsListView;
+import android.widget.CheckedTextView;
+import android.widget.ListView;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -264,5 +269,31 @@ public class GlobalFunctions {
             return false;
         }
         return true;
+    }
+
+    public static void fixDialogMarshmellow(AlertDialog dialog){
+        if (Build.VERSION.SDK_INT >= 23) {
+            ListView listView = dialog.getListView();
+            listView.setOnScrollListener(new AbsListView.OnScrollListener() {
+                @Override
+                public void onScrollStateChanged(AbsListView view, int scrollState) {
+                    int size = view.getChildCount();
+                    for (int i=0; i<size; i++) {
+                        View v = view.getChildAt(i);
+                        if (v instanceof CheckedTextView)
+                            ((CheckedTextView)v).refreshDrawableState();
+                    }
+                }
+                @Override
+                public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
+                    int size = view.getChildCount();
+                    for (int i=0; i<size; i++) {
+                        View v = view.getChildAt(i);
+                        if (v instanceof CheckedTextView)
+                            ((CheckedTextView)v).refreshDrawableState();
+                    }
+                }
+            });
+        }
     }
 }

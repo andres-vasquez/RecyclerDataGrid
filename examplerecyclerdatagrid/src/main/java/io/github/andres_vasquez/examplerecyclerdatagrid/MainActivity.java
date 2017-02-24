@@ -11,6 +11,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -21,7 +22,8 @@ import java.util.Random;
 import io.github.andres_vasquez.recyclerdatagrid.models.appClasses.CellProperties;
 import io.github.andres_vasquez.recyclerdatagrid.models.appClasses.ColumnItem;
 import io.github.andres_vasquez.recyclerdatagrid.models.appClasses.DataGridProperties;
-import io.github.andres_vasquez.recyclerdatagrid.ui.fragments.DataGridFragmentFragment;
+import io.github.andres_vasquez.recyclerdatagrid.models.interfaces.FilterColumnInterface;
+import io.github.andres_vasquez.recyclerdatagrid.ui.fragments.DataGridFragment;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener{
 
@@ -39,7 +41,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private int mActualCount=0;
 
     //Data Grid Fragment Object
-    private DataGridFragmentFragment mDataGridFragment;
+    private DataGridFragment mDataGridFragment;
 
     //Columns for data displayed
     private List<ColumnItem> lstColumns;
@@ -54,6 +56,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        mContext=this;
+
         initViews();
 
         //Init columns
@@ -69,7 +73,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mAddMultipleButton.setOnClickListener(this);
 
 
-        mDataGridFragment =new DataGridFragmentFragment();
+        mDataGridFragment =new DataGridFragment();
 
         //FillBase colunns
         ColumnItem columnItem1=new ColumnItem(1,"Column1");
@@ -117,11 +121,29 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     public void onClick(View view) {
         switch (view.getId()){
-            case R.id.imgFilterRows:
+            case R.id.filter_rows_imageview:
 
                 break;
-            case R.id.imgFilterColumns:
-                mDataGridFragment.showColumnsPickUpDialog();
+            case R.id.filter_columns_imageview:
+                mDataGridFragment.showColumnsPickUpDialog(new FilterColumnInterface() {
+                    @Override
+                    public void onColumnsSelectedChanged(List<ColumnItem> lstColumns) {
+                        //Some validations. Ex. Min 2 columns
+                        int selectedCount=0;
+                        for (ColumnItem column : lstColumns){
+                            if(column.isSelected()){
+                                selectedCount++;
+                            }
+                        }
+
+                        if(selectedCount<2){
+                            Toast.makeText(mContext,"You have to select at least 2 columns",
+                                    Toast.LENGTH_SHORT).show();
+                        } else {
+                            mDataGridFragment.applyColumnChanges(lstColumns);
+                        }
+                    }
+                });
                 break;
             case R.id.add_one_button:
                 addOne();
