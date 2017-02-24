@@ -1,0 +1,35 @@
+<resources>
+    <!-- Default screen margins, per the Android Design guidelines. -->
+    <dimen name="activity_horizontal_margin">32dp</dimen>
+    <dimen name="activity_vertical_margin">32dp</dimen>
+    <dimen name="fab_margin">16dp</dimen>
+
+    <dimen name="margin_logo">25dp</dimen>
+    <dimen name="padding_general">16dp</dimen>
+
+    <!-- Datagrid icon row -->
+    <dimen name="filter_imageview">48dp</dimen>
+
+    <dimen name="margin_text_sm_space">4dp</dimen>
+    <dimen name="margin_text_space">8dp</dimen>
+    <dimen name="margin_double_text_space">16dp</dimen>
+    <dimen name="margin_triple_text_space">24dp</dimen>
+    <dimen name="margin_big_text_space">32dp</dimen>
+    <dimen name="margin_xl_text_space">48dp</dimen>
+
+    <dimen name="padding_xs">2dp</dimen>
+    <dimen name="padding_half">4dp</dimen>
+    <dimen name="padding_simple">8dp</dimen>
+    <dimen name="padding_md">10dp</dimen>
+    <dimen name="padding_dobule">16dp</dimen>
+    <dimen name="padding_triple">32dp</dimen>
+
+    <!-- Text sizes -->
+    <dimen name="text_xs">12sp</dimen>
+    <dimen name="text_sm">14sp</dimen>
+    <dimen name="text_md">16sp</dimen>
+    <dimen name="text_lg">18sp</dimen>
+    <dimen name="text_xl">20sp</dimen>
+    <dimen name="text_xxl">22sp</dimen>
+    <dimen name="text_xxl_count">54sp</dimen>
+</resources>

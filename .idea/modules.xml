@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/RecyclerDataGrid.iml" filepath="$PROJECT_DIR$/RecyclerDataGrid.iml" />
+      <module fileurl="file://$PROJECT_DIR$/examplerecyclerdatagrid/examplerecyclerdatagrid.iml" filepath="$PROJECT_DIR$/examplerecyclerdatagrid/examplerecyclerdatagrid.iml" />
+      <module fileurl="file://$PROJECT_DIR$/recyclerdatagrid/recyclerdatagrid.iml" filepath="$PROJECT_DIR$/recyclerdatagrid/recyclerdatagrid.iml" />
+    </modules>
+  </component>
+</project>
