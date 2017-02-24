@@ -6,7 +6,7 @@ import java.util.List;
  * Created by andresvasquez on 10/2/17.
  */
 
-public class DataGridProperties {
+public class DataGridProperties{
     private String uniqueColumn;
     private List<ColumnItem> columns;
 
