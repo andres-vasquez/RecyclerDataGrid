@@ -41,6 +41,8 @@ public class Constants {
     //Pass selectable tag
     public static final String EXTRA_SELECTABLE = "selectable";
 
+    //Pass custom selector tag
+    public static final String EXTRA_CUSTOM_SELECTOR = "customSelector";
 
     /**
      * Variable Type

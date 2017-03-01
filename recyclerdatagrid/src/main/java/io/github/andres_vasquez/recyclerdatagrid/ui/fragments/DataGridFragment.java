@@ -27,7 +27,7 @@ import io.github.andres_vasquez.recyclerdatagrid.models.appClasses.CellPropertie
 import io.github.andres_vasquez.recyclerdatagrid.models.appClasses.ColumnItem;
 import io.github.andres_vasquez.recyclerdatagrid.models.appClasses.DataGridItem;
 import io.github.andres_vasquez.recyclerdatagrid.models.appClasses.DataGridProperties;
-import io.github.andres_vasquez.recyclerdatagrid.models.appClasses.RowSelector;
+import io.github.andres_vasquez.recyclerdatagrid.models.appClasses.RowSelectorStyle;
 import io.github.andres_vasquez.recyclerdatagrid.models.events.HeaderOrderEvent;
 import io.github.andres_vasquez.recyclerdatagrid.models.interfaces.LoadInterface;
 import io.github.andres_vasquez.recyclerdatagrid.models.interfaces.ScrollNotifier;
@@ -59,7 +59,7 @@ public class DataGridFragment extends DataGridUISupportFragment
 
     //Selectable
     private boolean selectable;
-    private RowSelector rowSelector;
+    private RowSelectorStyle rowSelectorStyle;
 
     //Filters
     private Object filter;
@@ -70,6 +70,10 @@ public class DataGridFragment extends DataGridUISupportFragment
     private RecyclerView recyclerView;
 
     private ProgressDialog progressDialog;
+
+    //Events
+    private HorizontalAdapter.OnItemClickListener mClickListener;
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -120,6 +124,18 @@ public class DataGridFragment extends DataGridUISupportFragment
 
             //Selectable
             selectable=args.getBoolean(Constants.EXTRA_SELECTABLE,false);
+
+            //Custom selector
+            if(args.containsKey(Constants.EXTRA_CUSTOM_SELECTOR)){
+                try
+                {
+                    rowSelectorStyle = gson.fromJson(args.getString(Constants.EXTRA_CUSTOM_SELECTOR),
+                            RowSelectorStyle.class);
+                }
+                catch (Exception e){
+                    Log.e("Exception",""+e.getMessage());
+                }
+            }
         }
     }
 
@@ -153,14 +169,19 @@ public class DataGridFragment extends DataGridUISupportFragment
         scrollManager.addScrollClient(headerView);
 
         if(selectable){
-            rowSelector=getDefaultRowSelector();
-            horizontalAdapter=new HorizontalAdapter(mActivity,scrollManager,mapColumns,rowSelector);
+            if(rowSelectorStyle ==null){
+                rowSelectorStyle =getDefaultRowSelector();
+            }
+
+            horizontalAdapter=new HorizontalAdapter(mActivity,scrollManager,mapColumns, selectable,
+                    rowSelectorStyle);
         } else {
             horizontalAdapter=new HorizontalAdapter(mActivity,scrollManager,mapColumns);
         }
 
-
-        horizontalAdapter.setOnItemClickListener(this);
+        if(mClickListener!=null){
+            horizontalAdapter.setOnItemClickListener(mClickListener);
+        }
 
         recyclerView.setAdapter(horizontalAdapter);
         recyclerView.setLayoutManager(linearLayoutManager);
@@ -169,14 +190,13 @@ public class DataGridFragment extends DataGridUISupportFragment
         fillColumnsHeaders();
     }
 
-    private RowSelector getDefaultRowSelector() {
-        RowSelector rowSelector=new RowSelector();
-        rowSelector.setSelectable(true);
-        rowSelector.setBackgroundColor(mContext.getResources().getColor(R.color.white));
-        rowSelector.setBackgroundColorSelected(mContext.getResources().getColor(R.color.dividers));
-        rowSelector.setImageSelector(0);//No image
-        rowSelector.setImageSelectorSelected(R.drawable.icon_check_blue);
-        return rowSelector;
+    private RowSelectorStyle getDefaultRowSelector() {
+        RowSelectorStyle rowSelectorStyle =new RowSelectorStyle();
+        rowSelectorStyle.setBackgroundColor(mContext.getResources().getColor(R.color.white));
+        rowSelectorStyle.setBackgroundColorSelected(mContext.getResources().getColor(R.color.dividers));
+        rowSelectorStyle.setImageSelector(0);//No image
+        rowSelectorStyle.setImageSelectorSelected(R.drawable.icon_check_blue);
+        return rowSelectorStyle;
     }
 
 
@@ -377,5 +397,45 @@ public class DataGridFragment extends DataGridUISupportFragment
         if(dataGridProperties.getUniqueColumn()!=null){
             uniqueColumnKey=dataGridProperties.getUniqueColumn();
         }
+
+        //Selectable
+        selectable=dataGridProperties.isSelectable();
+
+        //Custom selector
+        if(dataGridProperties.getCustomSelector()!=null){
+            rowSelectorStyle =dataGridProperties.getCustomSelector();
+        }
+
+        initDatagrid();
+    }
+
+    /**
+     * Add click listener to action
+     * @param clickListener callback
+     */
+    public void addItemClickListener(HorizontalAdapter.OnItemClickListener clickListener){
+        this.mClickListener=clickListener;
+        if(horizontalAdapter!=null){
+            horizontalAdapter.setOnItemClickListener(clickListener);
+        }
+    }
+
+    /**
+     * Get selected Items from Datagrid
+     * @return
+     */
+    public List<DataGridItem> getSelectedItems(){
+        List<DataGridItem> lstDataGridItems=new ArrayList<>();
+        if(horizontalAdapter!=null){
+            List<DataGridItem> lstAllItems=horizontalAdapter.getmItems();
+            if(lstAllItems!=null){
+                for (DataGridItem item : lstAllItems){
+                    if(item.isSelected()){
+                        lstDataGridItems.add(item);
+                    }
+                }
+            }
+        }
+        return lstDataGridItems;
     }
 }

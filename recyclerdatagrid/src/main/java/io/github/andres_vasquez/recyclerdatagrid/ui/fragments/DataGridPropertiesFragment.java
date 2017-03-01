@@ -32,6 +32,12 @@ public class DataGridPropertiesFragment extends Fragment {
         }
 
         args.putBoolean(Constants.EXTRA_SELECTABLE,dataGridProperties.isSelectable());
+
+        if(dataGridProperties.getCustomSelector()!=null){
+            args.putString(Constants.EXTRA_CUSTOM_SELECTOR,
+                    gson.toJson(dataGridProperties.getCustomSelector()));
+        }
+
         this.setArguments(args);
     }
 }

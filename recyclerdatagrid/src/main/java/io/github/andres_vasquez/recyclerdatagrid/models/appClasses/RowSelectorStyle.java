@@ -4,20 +4,11 @@ package io.github.andres_vasquez.recyclerdatagrid.models.appClasses;
  * Created by andresvasquez on 1/3/17.
  */
 
-public class RowSelector {
-    private boolean selectable;
+public class RowSelectorStyle {
     private int backgroundColorSelected;
     private int backgroundColor;
     private int imageSelectorSelected;
     private int imageSelector;
-
-    public boolean isSelectable() {
-        return selectable;
-    }
-
-    public void setSelectable(boolean selectable) {
-        this.selectable = selectable;
-    }
 
     public int getBackgroundColorSelected() {
         return backgroundColorSelected;

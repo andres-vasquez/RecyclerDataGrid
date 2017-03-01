@@ -10,6 +10,7 @@ public class DataGridProperties{
     private String uniqueColumn;
     private List<ColumnItem> columns;
     private boolean selectable;
+    private RowSelectorStyle customSelector;
 
     public String getUniqueColumn() {
         return uniqueColumn;
@@ -34,5 +35,13 @@ public class DataGridProperties{
 
     public void setSelectable(boolean selectable) {
         this.selectable = selectable;
+    }
+
+    public RowSelectorStyle getCustomSelector() {
+        return customSelector;
+    }
+
+    public void setCustomSelector(RowSelectorStyle customSelector) {
+        this.customSelector = customSelector;
     }
 }

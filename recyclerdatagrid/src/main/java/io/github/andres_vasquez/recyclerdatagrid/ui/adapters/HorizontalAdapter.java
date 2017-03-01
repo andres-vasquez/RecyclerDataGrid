@@ -24,7 +24,7 @@ import io.github.andres_vasquez.recyclerdatagrid.controller.listener.ScrollManag
 import io.github.andres_vasquez.recyclerdatagrid.models.appClasses.CellProperties;
 import io.github.andres_vasquez.recyclerdatagrid.models.appClasses.ColumnItem;
 import io.github.andres_vasquez.recyclerdatagrid.models.appClasses.DataGridItem;
-import io.github.andres_vasquez.recyclerdatagrid.models.appClasses.RowSelector;
+import io.github.andres_vasquez.recyclerdatagrid.models.appClasses.RowSelectorStyle;
 import io.github.andres_vasquez.recyclerdatagrid.models.interfaces.LoadInterface;
 import io.github.andres_vasquez.recyclerdatagrid.models.interfaces.ScrollNotifier;
 import io.github.andres_vasquez.recyclerdatagrid.ui.views.CustomTemplates;
@@ -55,7 +55,8 @@ public class HorizontalAdapter extends RecyclerView.Adapter<HorizontalAdapter.It
     private Object filterValue;
 
     //Selectable
-    private RowSelector mRowSelector;
+    private boolean mSelectable;
+    private RowSelectorStyle mRowSelectorStyle;
 
     public boolean isFilterActive() {
         return filterActive;
@@ -73,7 +74,8 @@ public class HorizontalAdapter extends RecyclerView.Adapter<HorizontalAdapter.It
     }
 
     public HorizontalAdapter(Activity activity, ScrollManager mScrollManager,
-                             Map<String,ColumnItem> mapColumns, RowSelector rowSelector){
+                             Map<String,ColumnItem> mapColumns, boolean selectable,
+                             RowSelectorStyle rowSelectorStyle){
         this.mActivity=activity;
         this.mContext=activity.getApplicationContext();
         mLayoutInflater = LayoutInflater.from(mContext);
@@ -81,7 +83,7 @@ public class HorizontalAdapter extends RecyclerView.Adapter<HorizontalAdapter.It
         this.mMapItems =new LinkedHashMap<>();
         this.mScrollManager = mScrollManager;
         this.mMapColumns=mapColumns;
-        this.mRowSelector=rowSelector;
+        this.mRowSelectorStyle = rowSelectorStyle;
     }
 
     @Override
@@ -95,13 +97,13 @@ public class HorizontalAdapter extends RecyclerView.Adapter<HorizontalAdapter.It
         final DataGridItem item = mItems.get(position);
 
         //Selector
-        if(mRowSelector!=null && mRowSelector.isSelectable()){
+        if(mSelectable && mRowSelectorStyle!=null){
             if(item.isSelected()){
-                holder.viewParent.setBackgroundColor(mRowSelector.getBackgroundColorSelected());
-                holder.imgState.setImageResource(mRowSelector.getImageSelectorSelected());
+                holder.viewParent.setBackgroundColor(mRowSelectorStyle.getBackgroundColorSelected());
+                holder.imgState.setImageResource(mRowSelectorStyle.getImageSelectorSelected());
             } else {
-                holder.viewParent.setBackgroundColor(mRowSelector.getBackgroundColor());
-                holder.imgState.setImageResource(mRowSelector.getImageSelector());
+                holder.viewParent.setBackgroundColor(mRowSelectorStyle.getBackgroundColor());
+                holder.imgState.setImageResource(mRowSelectorStyle.getImageSelector());
             }
             holder.imgState.setVisibility(View.VISIBLE);
         } else {
@@ -159,7 +161,7 @@ public class HorizontalAdapter extends RecyclerView.Adapter<HorizontalAdapter.It
             @Override
             public void onClick(View view) {
                 //Change state for selector
-                if(mRowSelector!=null && mRowSelector.isSelectable()){
+                if(mSelectable){
                     item.setSelected(!item.isSelected());
                     notifyItemChanged(position);
                 }

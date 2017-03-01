@@ -24,11 +24,15 @@ import java.util.Random;
 
 import io.github.andres_vasquez.recyclerdatagrid.models.appClasses.CellProperties;
 import io.github.andres_vasquez.recyclerdatagrid.models.appClasses.ColumnItem;
+import io.github.andres_vasquez.recyclerdatagrid.models.appClasses.DataGridItem;
 import io.github.andres_vasquez.recyclerdatagrid.models.appClasses.DataGridProperties;
+import io.github.andres_vasquez.recyclerdatagrid.models.appClasses.RowSelectorStyle;
 import io.github.andres_vasquez.recyclerdatagrid.models.interfaces.FilterColumnInterface;
+import io.github.andres_vasquez.recyclerdatagrid.ui.adapters.HorizontalAdapter;
 import io.github.andres_vasquez.recyclerdatagrid.ui.fragments.DataGridFragment;
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener, CompoundButton.OnCheckedChangeListener{
+public class MainActivity extends AppCompatActivity implements View.OnClickListener,
+        CompoundButton.OnCheckedChangeListener, HorizontalAdapter.OnItemClickListener {
 
     private Context mContext;
 
@@ -58,6 +62,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private static final String COLUMN_KEY_3="Column3";
     private static final String COLUMN_KEY_4="Column4";
     private static final String COLUMN_KEY_5="Column5";
+
+    private boolean selectable;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -98,10 +104,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         dataGridProperties=new DataGridProperties();
         dataGridProperties.setColumns(lstColumns);
         dataGridProperties.setUniqueColumn(COLUMN_KEY_1);
-        dataGridProperties.setSelectable(true);
 
         //Set properties
         mDataGridFragment.setProperties(dataGridProperties);
+        mDataGridFragment.addItemClickListener(this);
 
         FragmentManager fm= getSupportFragmentManager();
         fm.beginTransaction()
@@ -157,7 +163,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     public void onCheckedChanged(CompoundButton compoundButton, boolean checked) {
         if(compoundButton.getId()==R.id.selectable_checkbox){
+            selectable=checked;
             dataGridProperties.setSelectable(checked);
+
+            if(selectable){
+                //Custom selector
+                RowSelectorStyle rowSelectorStyle = new RowSelectorStyle();
+                rowSelectorStyle.setBackgroundColor(mContext.getResources().getColor(R.color.bkg_info));
+                rowSelectorStyle.setBackgroundColorSelected(mContext.getResources().getColor(R.color.bkg_success));
+                rowSelectorStyle.setImageSelectorSelected(R.drawable.icon_check_blue);
+                rowSelectorStyle.setImageSelector(R.drawable.icon_wrong);
+                dataGridProperties.setCustomSelector(rowSelectorStyle);
+            }
             mDataGridFragment.applyProperties(dataGridProperties);
         }
     }
@@ -195,6 +212,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 break;
             default:
                 break;
+        }
+    }
+
+    @Override
+    public void onItemClick(DataGridItem globalTagItem, int position) {
+        if(selectable){
+            //Show number of selected items
+            mResultTextView.setText("Selected: "+mDataGridFragment.getSelectedItems().size());
+        } else {
+            //Show unique label clicked
+            Map<String,Object> mapData=globalTagItem.getMapData();
+            mResultTextView.setText("Unique value: "+mapData.get(globalTagItem.getUniqueIdentificator().toString())
+                    .toString());
         }
     }
 }
