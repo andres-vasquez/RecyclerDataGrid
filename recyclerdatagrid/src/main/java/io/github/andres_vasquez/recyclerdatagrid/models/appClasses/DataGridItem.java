@@ -12,6 +12,7 @@ public class DataGridItem {
     private Map<String,Object> mapData;
     private boolean filtered;
     private Object filterValue;
+    private boolean selected;
 
     public Object getUniqueIdentificator() {
         return uniqueIdentificator;
@@ -43,5 +44,13 @@ public class DataGridItem {
 
     public void setFilterValue(Object filterValue) {
         this.filterValue = filterValue;
+    }
+
+    public boolean isSelected() {
+        return selected;
+    }
+
+    public void setSelected(boolean selected) {
+        this.selected = selected;
     }
 }

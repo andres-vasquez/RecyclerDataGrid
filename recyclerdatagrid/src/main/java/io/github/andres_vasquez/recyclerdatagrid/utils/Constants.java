@@ -38,8 +38,9 @@ public class Constants {
     //Pass filter object to DataGridFragment
     public static final String EXTRA_FILTER = "filter";
 
-    //Pass map of columns selected and width
-    public static final String EXTRA_SELECTED_COLUMNS = "mapColumnsSelected";
+    //Pass selectable tag
+    public static final String EXTRA_SELECTABLE = "selectable";
+
 
     /**
      * Variable Type

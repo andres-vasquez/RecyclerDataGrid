@@ -14,6 +14,10 @@ import io.github.andres_vasquez.recyclerdatagrid.utils.Constants;
 
 public class DataGridPropertiesFragment extends Fragment {
 
+    /**
+     * Set initial properties to DataGrid
+     * @param dataGridProperties DataGrid properties object
+     */
     public void setProperties(DataGridProperties dataGridProperties){
         Gson gson=new Gson();
 
@@ -27,6 +31,7 @@ public class DataGridPropertiesFragment extends Fragment {
             args.putString(Constants.EXTRA_UNIQUE_COLUMN,dataGridProperties.getUniqueColumn());
         }
 
+        args.putBoolean(Constants.EXTRA_SELECTABLE,dataGridProperties.isSelectable());
         this.setArguments(args);
     }
 }

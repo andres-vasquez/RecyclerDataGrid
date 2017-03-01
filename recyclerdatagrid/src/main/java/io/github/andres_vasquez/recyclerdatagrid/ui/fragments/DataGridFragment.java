@@ -26,6 +26,8 @@ import io.github.andres_vasquez.recyclerdatagrid.controller.listener.ScrollManag
 import io.github.andres_vasquez.recyclerdatagrid.models.appClasses.CellProperties;
 import io.github.andres_vasquez.recyclerdatagrid.models.appClasses.ColumnItem;
 import io.github.andres_vasquez.recyclerdatagrid.models.appClasses.DataGridItem;
+import io.github.andres_vasquez.recyclerdatagrid.models.appClasses.DataGridProperties;
+import io.github.andres_vasquez.recyclerdatagrid.models.appClasses.RowSelector;
 import io.github.andres_vasquez.recyclerdatagrid.models.events.HeaderOrderEvent;
 import io.github.andres_vasquez.recyclerdatagrid.models.interfaces.LoadInterface;
 import io.github.andres_vasquez.recyclerdatagrid.models.interfaces.ScrollNotifier;
@@ -55,6 +57,10 @@ public class DataGridFragment extends DataGridUISupportFragment
     private String orderType;
     private List<HeaderOrderEvent> lstHeaderOrderEvent;
 
+    //Selectable
+    private boolean selectable;
+    private RowSelector rowSelector;
+
     //Filters
     private Object filter;
 
@@ -80,10 +86,6 @@ public class DataGridFragment extends DataGridUISupportFragment
             if(args.containsKey(Constants.EXTRA_COLUMNS)){
                 try
                 {
-                    /*Type listType = new TypeToken<Map<String,Integer>>(){}.getType();
-                    lstColumnsSelected= new Gson()
-                            .fromJson(args.getString(Constants.EXTRA_SELECTED_COLUMNS), listType);*/
-
                     Type listType = new TypeToken<ArrayList<ColumnItem>>(){}.getType();
                     columns = gson.fromJson(args.getString(Constants.EXTRA_COLUMNS), listType);
 
@@ -115,6 +117,9 @@ public class DataGridFragment extends DataGridUISupportFragment
 
             //Filter
             filter=gson.fromJson(args.getString(Constants.EXTRA_FILTER),Object.class);
+
+            //Selectable
+            selectable=args.getBoolean(Constants.EXTRA_SELECTABLE,false);
         }
     }
 
@@ -132,6 +137,14 @@ public class DataGridFragment extends DataGridUISupportFragment
             }
         });
 
+        initDatagrid();
+        return view;
+    }
+
+    /**
+     * Init data grid
+     */
+    private void initDatagrid(){
         scrollManager=new ScrollManager();
         linearLayoutManager = new LinearLayoutManager(mContext, LinearLayoutManager.VERTICAL, false);
         lstItemsInAdapter =new ArrayList<DataGridItem>();
@@ -139,7 +152,14 @@ public class DataGridFragment extends DataGridUISupportFragment
         ScrollNotifier headerView = (ScrollNotifier) headerDynamic.findViewById(R.id.scroll);
         scrollManager.addScrollClient(headerView);
 
-        horizontalAdapter=new HorizontalAdapter(mActivity,scrollManager,mapColumns);
+        if(selectable){
+            rowSelector=getDefaultRowSelector();
+            horizontalAdapter=new HorizontalAdapter(mActivity,scrollManager,mapColumns,rowSelector);
+        } else {
+            horizontalAdapter=new HorizontalAdapter(mActivity,scrollManager,mapColumns);
+        }
+
+
         horizontalAdapter.setOnItemClickListener(this);
 
         recyclerView.setAdapter(horizontalAdapter);
@@ -147,9 +167,18 @@ public class DataGridFragment extends DataGridUISupportFragment
 
         //Fill headers and base List from report
         fillColumnsHeaders();
-
-        return view;
     }
+
+    private RowSelector getDefaultRowSelector() {
+        RowSelector rowSelector=new RowSelector();
+        rowSelector.setSelectable(true);
+        rowSelector.setBackgroundColor(mContext.getResources().getColor(R.color.white));
+        rowSelector.setBackgroundColorSelected(mContext.getResources().getColor(R.color.dividers));
+        rowSelector.setImageSelector(0);//No image
+        rowSelector.setImageSelectorSelected(R.drawable.icon_check_blue);
+        return rowSelector;
+    }
+
 
     /**
      * Creates map of columns with unique identifier (best performance)
@@ -269,7 +298,10 @@ public class DataGridFragment extends DataGridUISupportFragment
 
     }
 
-
+    /**
+     * Change header order
+     * @param event
+     */
     public void HeaderOrderEvent(HeaderOrderEvent event) {
         columnOrder=event.getColumn();
 
@@ -296,6 +328,10 @@ public class DataGridFragment extends DataGridUISupportFragment
         horizontalAdapter.applyOrderFilter(columnOrder,orderType,this);
     }
 
+    /**
+     * Apply column filter
+     * @param newColumnsConfiguration
+     */
     public void applyColumnChanges(List<ColumnItem> newColumnsConfiguration) {
         //Save in local variabless
         columns=newColumnsConfiguration;
@@ -329,4 +365,17 @@ public class DataGridFragment extends DataGridUISupportFragment
     }
 
 
+    public void applyProperties(DataGridProperties dataGridProperties) {
+        if(dataGridProperties.getColumns()!=null){
+            columns=dataGridProperties.getColumns();
+
+            //Change to map
+            mapColumns=getColumnsInMap();
+        }
+
+        //Unique column
+        if(dataGridProperties.getUniqueColumn()!=null){
+            uniqueColumnKey=dataGridProperties.getUniqueColumn();
+        }
+    }
 }

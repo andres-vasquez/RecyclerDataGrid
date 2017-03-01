@@ -8,9 +8,12 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
@@ -25,7 +28,7 @@ import io.github.andres_vasquez.recyclerdatagrid.models.appClasses.DataGridPrope
 import io.github.andres_vasquez.recyclerdatagrid.models.interfaces.FilterColumnInterface;
 import io.github.andres_vasquez.recyclerdatagrid.ui.fragments.DataGridFragment;
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener{
+public class MainActivity extends AppCompatActivity implements View.OnClickListener, CompoundButton.OnCheckedChangeListener{
 
     private Context mContext;
 
@@ -37,11 +40,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private Button mAddMultipleButton;
     private EditText mSimulatorNumerEditText;
 
+    private CheckBox mSelectableCheckBox;
+    private TextView mResultTextView;
+
     private FrameLayout frameLayout;
     private int mActualCount=0;
 
     //Data Grid Fragment Object
     private DataGridFragment mDataGridFragment;
+    private DataGridProperties dataGridProperties;
 
     //Columns for data displayed
     private List<ColumnItem> lstColumns;
@@ -72,6 +79,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mAddOneButton.setOnClickListener(this);
         mAddMultipleButton.setOnClickListener(this);
 
+        mSelectableCheckBox.setOnCheckedChangeListener(this);
+
 
         mDataGridFragment =new DataGridFragment();
 
@@ -86,9 +95,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         lstColumns.add(new ColumnItem(5,"Column5"));
 
         //Arguments required columns
-        DataGridProperties dataGridProperties=new DataGridProperties();
+        dataGridProperties=new DataGridProperties();
         dataGridProperties.setColumns(lstColumns);
         dataGridProperties.setUniqueColumn(COLUMN_KEY_1);
+        dataGridProperties.setSelectable(true);
 
         //Set properties
         mDataGridFragment.setProperties(dataGridProperties);
@@ -116,13 +126,46 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mAddOneButton=(Button)findViewById(R.id.add_one_button);
         mAddMultipleButton=(Button)findViewById(R.id.add_multiple_button);
         mSimulatorNumerEditText=(EditText)findViewById(R.id.simulator_number_editext);
+
+        mSelectableCheckBox=(CheckBox)findViewById(R.id.selectable_checkbox);
+        mResultTextView =(TextView)findViewById(R.id.result_textview);
+    }
+
+    /**
+     * Add one Cell
+     */
+    private void addOne(){
+        Random r = new Random();
+        int Low = 0;
+        int High = 1000;
+        int random = 0;
+
+        Map<String,Object> mapRow=new LinkedHashMap<>();
+        random=r.nextInt(High-Low) + Low;
+        mapRow.put(COLUMN_KEY_1,"Data "+random);
+        random=r.nextInt(High-Low) + Low;
+        mapRow.put(COLUMN_KEY_2,"Data "+random);
+        random=r.nextInt(High-Low) + Low;
+        mapRow.put(COLUMN_KEY_3,"Data "+random);
+        random=r.nextInt(High-Low) + Low;
+        mapRow.put(COLUMN_KEY_4,"Data "+random);
+        random=r.nextInt(High-Low) + Low;
+        mapRow.put(COLUMN_KEY_5,"Data "+random);
+        mDataGridFragment.addRow(mapRow);
+    }
+
+    @Override
+    public void onCheckedChanged(CompoundButton compoundButton, boolean checked) {
+        if(compoundButton.getId()==R.id.selectable_checkbox){
+            dataGridProperties.setSelectable(checked);
+            mDataGridFragment.applyProperties(dataGridProperties);
+        }
     }
 
     @Override
     public void onClick(View view) {
         switch (view.getId()){
             case R.id.filter_rows_imageview:
-
                 break;
             case R.id.filter_columns_imageview:
                 mDataGridFragment.showColumnsPickUpDialog(new FilterColumnInterface() {
@@ -149,33 +192,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 addOne();
                 break;
             case R.id.add_multiple_button:
-
                 break;
             default:
                 break;
         }
-    }
-
-    /**
-     * Add one Cell
-     */
-    private void addOne(){
-        Random r = new Random();
-        int Low = 0;
-        int High = 1000;
-        int random = 0;
-
-        Map<String,Object> mapRow=new LinkedHashMap<>();
-        random=r.nextInt(High-Low) + Low;
-        mapRow.put(COLUMN_KEY_1,"Data "+random);
-        random=r.nextInt(High-Low) + Low;
-        mapRow.put(COLUMN_KEY_2,"Data "+random);
-        random=r.nextInt(High-Low) + Low;
-        mapRow.put(COLUMN_KEY_3,"Data "+random);
-        random=r.nextInt(High-Low) + Low;
-        mapRow.put(COLUMN_KEY_4,"Data "+random);
-        random=r.nextInt(High-Low) + Low;
-        mapRow.put(COLUMN_KEY_5,"Data "+random);
-        mDataGridFragment.addRow(mapRow);
     }
 }

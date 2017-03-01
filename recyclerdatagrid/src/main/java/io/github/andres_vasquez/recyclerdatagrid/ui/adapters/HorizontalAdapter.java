@@ -24,6 +24,7 @@ import io.github.andres_vasquez.recyclerdatagrid.controller.listener.ScrollManag
 import io.github.andres_vasquez.recyclerdatagrid.models.appClasses.CellProperties;
 import io.github.andres_vasquez.recyclerdatagrid.models.appClasses.ColumnItem;
 import io.github.andres_vasquez.recyclerdatagrid.models.appClasses.DataGridItem;
+import io.github.andres_vasquez.recyclerdatagrid.models.appClasses.RowSelector;
 import io.github.andres_vasquez.recyclerdatagrid.models.interfaces.LoadInterface;
 import io.github.andres_vasquez.recyclerdatagrid.models.interfaces.ScrollNotifier;
 import io.github.andres_vasquez.recyclerdatagrid.ui.views.CustomTemplates;
@@ -53,6 +54,9 @@ public class HorizontalAdapter extends RecyclerView.Adapter<HorizontalAdapter.It
     private boolean filterActive;
     private Object filterValue;
 
+    //Selectable
+    private RowSelector mRowSelector;
+
     public boolean isFilterActive() {
         return filterActive;
     }
@@ -68,18 +72,17 @@ public class HorizontalAdapter extends RecyclerView.Adapter<HorizontalAdapter.It
         this.mMapColumns=mapColumns;
     }
 
-    public HorizontalAdapter(Activity activity,String mColumnOrder, String mOrderType,
-                             ScrollManager mScrollManager){
+    public HorizontalAdapter(Activity activity, ScrollManager mScrollManager,
+                             Map<String,ColumnItem> mapColumns, RowSelector rowSelector){
         this.mActivity=activity;
         this.mContext=activity.getApplicationContext();
         mLayoutInflater = LayoutInflater.from(mContext);
         this.mItems =new ArrayList<DataGridItem>();
-        this.mMapItems =new LinkedHashMap<Object, Integer>();
+        this.mMapItems =new LinkedHashMap<>();
         this.mScrollManager = mScrollManager;
-        this.mColumnOrder = mColumnOrder;
-        this.mOrderType = mOrderType;
+        this.mMapColumns=mapColumns;
+        this.mRowSelector=rowSelector;
     }
-
 
     @Override
     public HorizontalAdapter.ItemHolder onCreateViewHolder(ViewGroup parent, int viewType) {
@@ -90,6 +93,21 @@ public class HorizontalAdapter extends RecyclerView.Adapter<HorizontalAdapter.It
     @Override
     public void onBindViewHolder(final HorizontalAdapter.ItemHolder holder, final int position) {
         final DataGridItem item = mItems.get(position);
+
+        //Selector
+        if(mRowSelector!=null && mRowSelector.isSelectable()){
+            if(item.isSelected()){
+                holder.viewParent.setBackgroundColor(mRowSelector.getBackgroundColorSelected());
+                holder.imgState.setImageResource(mRowSelector.getImageSelectorSelected());
+            } else {
+                holder.viewParent.setBackgroundColor(mRowSelector.getBackgroundColor());
+                holder.imgState.setImageResource(mRowSelector.getImageSelector());
+            }
+            holder.imgState.setVisibility(View.VISIBLE);
+        } else {
+            holder.imgState.setImageResource(0);
+            holder.imgState.setVisibility(View.INVISIBLE);
+        }
 
         holder.lyColumns.removeAllViews();
         CustomTemplates templates=new CustomTemplates(mContext);
@@ -140,6 +158,12 @@ public class HorizontalAdapter extends RecyclerView.Adapter<HorizontalAdapter.It
         holder.lyColumns.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                //Change state for selector
+                if(mRowSelector!=null && mRowSelector.isSelectable()){
+                    item.setSelected(!item.isSelected());
+                    notifyItemChanged(position);
+                }
+
                 final OnItemClickListener listener = holder.parent.getOnItemClickListener();
                 if(listener != null){
                     listener.onItemClick(item, position);
@@ -310,6 +334,7 @@ public class HorizontalAdapter extends RecyclerView.Adapter<HorizontalAdapter.It
 
             this.parent = parent;
             lyColumns=(LinearLayout) itemView.findViewById(R.id.lyColumns);
+            imgState=(ImageView) itemView.findViewById(R.id.imgState);
         }
     }
 

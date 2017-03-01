@@ -9,6 +9,7 @@ import java.util.List;
 public class DataGridProperties{
     private String uniqueColumn;
     private List<ColumnItem> columns;
+    private boolean selectable;
 
     public String getUniqueColumn() {
         return uniqueColumn;
@@ -25,5 +26,13 @@ public class DataGridProperties{
 
     public void setColumns(List<ColumnItem> columns) {
         this.columns = columns;
+    }
+
+    public boolean isSelectable() {
+        return selectable;
+    }
+
+    public void setSelectable(boolean selectable) {
+        this.selectable = selectable;
     }
 }
