@@ -78,6 +78,7 @@ public class HorizontalAdapter extends RecyclerView.Adapter<HorizontalAdapter.It
                              RowSelectorStyle rowSelectorStyle){
         this.mActivity=activity;
         this.mContext=activity.getApplicationContext();
+        this.mSelectable=selectable;
         mLayoutInflater = LayoutInflater.from(mContext);
         this.mItems =new ArrayList<DataGridItem>();
         this.mMapItems =new LinkedHashMap<>();
@@ -386,6 +387,14 @@ public class HorizontalAdapter extends RecyclerView.Adapter<HorizontalAdapter.It
         mMapColumns=mapColumnsUpdated;
         notifyDataSetChanged();
         callback.onDataLoaded();
+    }
+
+    /**
+     * Set selectable enable/disable
+     * @param isSelectable change selectable parameter
+     */
+    public void setSelectable(boolean isSelectable){
+        this.mSelectable=isSelectable;
     }
 }
 

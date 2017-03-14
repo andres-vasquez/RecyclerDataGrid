@@ -63,7 +63,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private static final String COLUMN_KEY_4="Column4";
     private static final String COLUMN_KEY_5="Column5";
 
-    private boolean selectable;
+    private boolean selectable=true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -91,14 +91,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mDataGridFragment =new DataGridFragment();
 
         //FillBase colunns
-        ColumnItem columnItem1=new ColumnItem(1,"Column1");
+        ColumnItem columnItem1=new ColumnItem(1,COLUMN_KEY_1);
         columnItem1.setCellProperties(new CellProperties(200, Color.RED, 10, Gravity.RIGHT));
 
         lstColumns.add(columnItem1);
-        lstColumns.add(new ColumnItem(2,"Column2"));
-        lstColumns.add(new ColumnItem(3,"Column3"));
-        lstColumns.add(new ColumnItem(4,"Column4"));
-        lstColumns.add(new ColumnItem(5,"Column5"));
+        lstColumns.add(new ColumnItem(2,COLUMN_KEY_2));
+        lstColumns.add(new ColumnItem(3,COLUMN_KEY_3));
+        lstColumns.add(new ColumnItem(4,COLUMN_KEY_4));
+        lstColumns.add(new ColumnItem(5,COLUMN_KEY_5));
 
         //Arguments required columns
         dataGridProperties=new DataGridProperties();

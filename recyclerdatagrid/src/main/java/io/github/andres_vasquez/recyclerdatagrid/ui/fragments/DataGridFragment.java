@@ -315,7 +315,6 @@ public class DataGridFragment extends DataGridUISupportFragment
 
     @Override
     public void onItemClick(DataGridItem globalTagItem, int position) {
-
     }
 
     /**
@@ -384,7 +383,10 @@ public class DataGridFragment extends DataGridUISupportFragment
         hideLoadingDialog();
     }
 
-
+    /**
+     * Apply new properties
+     * @param dataGridProperties Datagrid Properties Object
+     */
     public void applyProperties(DataGridProperties dataGridProperties) {
         if(dataGridProperties.getColumns()!=null){
             columns=dataGridProperties.getColumns();
