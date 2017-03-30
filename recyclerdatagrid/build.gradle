@@ -1,5 +1,7 @@
 apply plugin: 'com.android.library'
 
+version = "0.1.1"
+
 android {
     compileSdkVersion 25
     buildToolsVersion "25.0.0"
@@ -42,3 +44,5 @@ buildscript {
     ext.gson_version = '2.7'
     ext.eventbus_version = '3.0.0'
 }
+
+apply from: '../recyclerdatagrid.gradle'
