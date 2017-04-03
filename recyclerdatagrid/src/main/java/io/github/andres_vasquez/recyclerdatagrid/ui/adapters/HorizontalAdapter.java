@@ -2,16 +2,11 @@ package io.github.andres_vasquez.recyclerdatagrid.ui.adapters;
 
 import android.app.Activity;
 import android.content.Context;
-import android.graphics.Color;
 import android.support.v7.widget.RecyclerView;
-import android.view.Display;
-import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -21,7 +16,6 @@ import java.util.Map;
 
 import io.github.andres_vasquez.recyclerdatagrid.R;
 import io.github.andres_vasquez.recyclerdatagrid.controller.listener.ScrollManager;
-import io.github.andres_vasquez.recyclerdatagrid.models.appClasses.CellProperties;
 import io.github.andres_vasquez.recyclerdatagrid.models.appClasses.ColumnItem;
 import io.github.andres_vasquez.recyclerdatagrid.models.appClasses.DataGridItem;
 import io.github.andres_vasquez.recyclerdatagrid.models.appClasses.RowSelectorStyle;
@@ -39,9 +33,15 @@ public class HorizontalAdapter extends RecyclerView.Adapter<HorizontalAdapter.It
     private Activity mActivity;
     private Context mContext;
 
+    private Map<String,ColumnItem> mMapFixedColumns;
     private Map<String,ColumnItem> mMapColumns;
+
+    private List<DataGridItem> mItemsFiltered;
     private List<DataGridItem> mItems;
+
+    private Map<Object, Integer> mMapItemsFiltered;
     private Map<Object, Integer> mMapItems;
+
     private OnItemClickListener onItemClickListener;
     private LayoutInflater mLayoutInflater;
     private ScrollManager mScrollManager;
@@ -52,7 +52,7 @@ public class HorizontalAdapter extends RecyclerView.Adapter<HorizontalAdapter.It
 
     //Rows filter
     private boolean filterActive;
-    private Object filterValue;
+    private String filterValue;
 
     //Selectable
     private boolean mSelectable;
@@ -63,14 +63,18 @@ public class HorizontalAdapter extends RecyclerView.Adapter<HorizontalAdapter.It
     }
 
     public HorizontalAdapter(Activity activity, ScrollManager mScrollManager,
-                             Map<String,ColumnItem> mapColumns){
+                             Map<String,ColumnItem> mapColumns,
+                             Map<String,ColumnItem> mapFixedColumns){
         this.mActivity=activity;
         this.mContext=activity.getApplicationContext();
         mLayoutInflater = LayoutInflater.from(mContext);
-        this.mItems =new ArrayList<DataGridItem>();
+        this.mItemsFiltered =new ArrayList<DataGridItem>();
+        this.mItems=new ArrayList<>();
+        this.mMapItemsFiltered =new LinkedHashMap<>();
         this.mMapItems =new LinkedHashMap<>();
         this.mScrollManager = mScrollManager;
         this.mMapColumns=mapColumns;
+        this.mMapFixedColumns=mapFixedColumns;
     }
 
     public HorizontalAdapter(Activity activity, ScrollManager mScrollManager,
@@ -80,7 +84,9 @@ public class HorizontalAdapter extends RecyclerView.Adapter<HorizontalAdapter.It
         this.mContext=activity.getApplicationContext();
         this.mSelectable=selectable;
         mLayoutInflater = LayoutInflater.from(mContext);
-        this.mItems =new ArrayList<DataGridItem>();
+        this.mItemsFiltered =new ArrayList<DataGridItem>();
+        this.mItems=new ArrayList<>();
+        this.mMapItemsFiltered =new LinkedHashMap<>();
         this.mMapItems =new LinkedHashMap<>();
         this.mScrollManager = mScrollManager;
         this.mMapColumns=mapColumns;
@@ -95,65 +101,71 @@ public class HorizontalAdapter extends RecyclerView.Adapter<HorizontalAdapter.It
 
     @Override
     public void onBindViewHolder(final HorizontalAdapter.ItemHolder holder, final int position) {
-        final DataGridItem item = mItems.get(position);
+        final DataGridItem item = mItemsFiltered.get(position);
 
         //Selector
+        //TODO play with selector state
         if(mSelectable && mRowSelectorStyle!=null){
             if(item.isSelected()){
                 holder.viewParent.setBackgroundColor(mRowSelectorStyle.getBackgroundColorSelected());
-                holder.imgState.setImageResource(mRowSelectorStyle.getImageSelectorSelected());
+                //holder.imgState.setImageResource(mRowSelectorStyle.getImageSelectorSelected());
             } else {
                 holder.viewParent.setBackgroundColor(mRowSelectorStyle.getBackgroundColor());
-                holder.imgState.setImageResource(mRowSelectorStyle.getImageSelector());
+                //holder.imgState.setImageResource(mRowSelectorStyle.getImageSelector());
             }
-            holder.imgState.setVisibility(View.VISIBLE);
+            //holder.imgState.setVisibility(View.VISIBLE);
         } else {
-            holder.imgState.setImageResource(0);
-            holder.imgState.setVisibility(View.INVISIBLE);
+            //holder.imgState.setImageResource(0);
+            //holder.imgState.setVisibility(View.INVISIBLE);
         }
 
         holder.lyColumns.removeAllViews();
-        CustomTemplates templates=new CustomTemplates(mContext);
+        holder.lyFixedColumns.removeAllViews();
+        CustomTemplates templates=new CustomTemplates(mActivity);
 
-        int count=0;
+        int dynamicColumnCount=0;
         for(Map.Entry<String,Object> mEntry : item.getMapData().entrySet()){
 
-            //TODO implement different types
-            TextView textView;
+            View dynamicView;
 
             //Fill cell proterties inside columns
-            if(mMapColumns.containsKey(mEntry.getKey())){
-                if(mMapColumns.get(mEntry.getKey()).isSelected()){
-                    CellProperties cellProperties=mMapColumns.get(
-                            mEntry.getKey()).getCellProperties();
-                    if(cellProperties==null){
-                        cellProperties=getDefaultCellProperties();
-                    }
+            //Fill fixed columns
+            if(mMapFixedColumns.containsKey(mEntry.getKey())){
 
-                    try {
-                        textView=templates.textField(mEntry.getValue().toString(),
-                                cellProperties.getWidth());
-                        textView.setGravity(cellProperties.getGravity());
-                        textView.setTextColor(cellProperties.getTextColor());
-                        textView.setTextSize(cellProperties.getTextSize());
-                    }catch (NullPointerException ex){
-                        textView=templates.textField(mEntry.getValue().toString(),
-                                cellProperties.getWidth());
-                    }
+                ColumnItem columnItem=mMapFixedColumns.get(mEntry.getKey());
+                if(columnItem.isSelected()){
+                    dynamicView=templates.dynamicView(columnItem,
+                            mEntry.getValue(),false);
 
-
-                    ViewGroup parent = (ViewGroup) textView.getParent();
+                    ViewGroup parent = (ViewGroup) dynamicView.getParent();
                     if (parent != null) {
-                        parent.removeView(textView);
+                        parent.removeView(dynamicView);
                     }
 
                     // Add to another parent
-                    holder.lyColumns.addView(textView);
+                    holder.lyFixedColumns.addView(dynamicView);
+                    holder.lyFixedColumns.addView(templates.separatorLine());
+                }
 
-                    if(count<item.getMapData().size()-1){
+            } else if(mMapColumns.containsKey(mEntry.getKey())){
+
+                ColumnItem columnItem=mMapColumns.get(mEntry.getKey());
+                if(columnItem.isSelected()){
+                    dynamicView=templates.dynamicView(columnItem,
+                            mEntry.getValue(),false);
+
+                    ViewGroup parent = (ViewGroup) dynamicView.getParent();
+                    if (parent != null) {
+                        parent.removeView(dynamicView);
+                    }
+
+                    // Add to another parent
+                    holder.lyColumns.addView(dynamicView);
+
+                    if(dynamicColumnCount<item.getMapData().size()-1){
                         holder.lyColumns.addView(templates.separatorLine());
                     }
-                    count++;
+                    dynamicColumnCount++;
                 }
             }
         }
@@ -178,11 +190,11 @@ public class HorizontalAdapter extends RecyclerView.Adapter<HorizontalAdapter.It
 
     @Override
     public int getItemCount() {
-        return mItems.size();
+        return mItemsFiltered.size();
     }
 
-    public List<DataGridItem> getmItems() {
-        return mItems;
+    public List<DataGridItem> getmItemsFiltered() {
+        return mItemsFiltered;
     }
 
     public void setOnItemClickListener(OnItemClickListener listener){
@@ -192,6 +204,7 @@ public class HorizontalAdapter extends RecyclerView.Adapter<HorizontalAdapter.It
     public OnItemClickListener getOnItemClickListener(){
         return onItemClickListener;
     }
+
 
 
     public interface OnItemClickListener{
@@ -206,13 +219,14 @@ public class HorizontalAdapter extends RecyclerView.Adapter<HorizontalAdapter.It
         if(isFilterActive()){
             addFiltered(item);
         } else {
-            mItems.add(item);
-            notifyItemInserted(mItems.size()-1);
+            mItemsFiltered.add(item);
+            notifyItemInserted(mItemsFiltered.size()-1);
+
 
             if(!mColumnOrder.isEmpty()){
                 mapOrderedList(null);
             } else {
-                mMapItems.put(item.getUniqueIdentificator(), mItems.size()-1);
+                mMapItemsFiltered.put(item.getMapData().get(item.getUniqueIdentificator()), mItemsFiltered.size()-1);
             }
         }
     }
@@ -222,13 +236,17 @@ public class HorizontalAdapter extends RecyclerView.Adapter<HorizontalAdapter.It
      * @param item
      */
     private void addFiltered(DataGridItem item) {
-        mItems.add(item);
-        notifyItemInserted(mItems.size()-1);
+        if(item.getFilterValue().equals(filterValue)){
+            mItemsFiltered.add(item);
+            notifyItemInserted(mItemsFiltered.size()-1);
 
-        if(!mColumnOrder.isEmpty()){
-            mapOrderedList(null);
-        } else {
-            mMapItems.put(item.getUniqueIdentificator(), mItems.size()-1);
+
+            if(!mColumnOrder.isEmpty()){
+                mapOrderedList(null);
+            } else {
+                mMapItemsFiltered.put(item.getMapData().get(item.getUniqueIdentificator())
+                        , mItemsFiltered.size()-1);
+            }
         }
     }
 
@@ -236,41 +254,50 @@ public class HorizontalAdapter extends RecyclerView.Adapter<HorizontalAdapter.It
      * Update data from existing row
      * @param item
      */
-    public void update(final DataGridItem item){
-        //Update data in List
-        if(isFilterActive()){
-            if(item.getFilterValue().equals(filterValue)){
-                if(mMapItems.containsKey(item.getUniqueIdentificator())){
+    public void addOrUpdate(final DataGridItem item){
+        //Update in complete list
+        if(mMapItems.containsKey(item.getMapData().get(item.getUniqueIdentificator()))){
+            int allPosition=mMapItems.get(item.getMapData().get(item.getUniqueIdentificator()));
+            mItems.get(allPosition).setMapData(item.getMapData());
 
-                    //Update data by position
-                    int position = mMapItems.get(item.getUniqueIdentificator());
-                    mItems.get(position).setMapData(item.getMapData());
+            if(isFilterActive()){
+                if(item.getFilterValue().compareTo(filterValue)==0){
+                    if(mMapItemsFiltered.containsKey(item.getMapData().get(item.getUniqueIdentificator()))){
+
+                        //Update data by position
+                        int position = mMapItemsFiltered.get(item.getMapData().get(item.getUniqueIdentificator()));
+                        mItemsFiltered.get(position).setMapData(item.getMapData());
+                        notifyItemChanged(position);
+
+                        if(!mColumnOrder.isEmpty()) {
+                            mapOrderedList(null);
+                        }
+                    } else {
+                        //Add to List if doesn't exists
+                        addFiltered(item);
+                    }
+                } else {
+                    //If doesn't have the value as Filter remove it
+                    remove(item);
+                }
+            } else {
+                if(mMapItemsFiltered.containsKey(item.getUniqueIdentificator())){
+                    //Update data with inactive filter
+                    int position = mMapItemsFiltered.get(item.getMapData().get(item.getUniqueIdentificator()));
+                    mItemsFiltered.get(position).setMapData(item.getMapData());
                     notifyItemChanged(position);
+
                     if(!mColumnOrder.isEmpty()) {
                         mapOrderedList(null);
                     }
-                } else {
-                    //Add to List if doesn't exists
-                    addFiltered(item);
                 }
-            } else {
-                //If doesn't have the value as Filter remove it
-                remove(item);
             }
         } else {
-            //Update or add without filters
-            if(mMapItems.containsKey(item.getUniqueIdentificator())){
-                //Update data with inactive filter
-                int position = mMapItems.get(item.getUniqueIdentificator());
-                mItems.get(position).setMapData(item.getMapData());
-                notifyItemChanged(position);
-                if(!mColumnOrder.isEmpty()) {
-                    mapOrderedList(null);
-                }
-            } else {
-                //Add to List if doesn't exists
-                add(item);
-            }
+            //Add new items
+            mItems.add(item);
+            mMapItems.put(item.getMapData().get(item.getUniqueIdentificator()), mItems.size()-1);
+
+            add(item);
         }
     }
 
@@ -280,10 +307,10 @@ public class HorizontalAdapter extends RecyclerView.Adapter<HorizontalAdapter.It
      */
     public void remove(DataGridItem item){
         //Remove from the grid
-        if(mMapItems.containsKey(item.getUniqueIdentificator())){
-            int position= mMapItems.get(item.getUniqueIdentificator());
-            mItems.remove(item);
-            mMapItems.remove(item.getUniqueIdentificator());
+        if(mMapItemsFiltered.containsKey(item.getUniqueIdentificator())){
+            int position= mMapItemsFiltered.get(item.getUniqueIdentificator());
+            mItemsFiltered.remove(item);
+            mMapItemsFiltered.remove(item.getUniqueIdentificator());
             notifyItemRemoved(position);
             if(!mColumnOrder.isEmpty()) {
                 mapOrderedList(null);
@@ -295,13 +322,13 @@ public class HorizontalAdapter extends RecyclerView.Adapter<HorizontalAdapter.It
      * Order items from datagrid
      */
     private void mapOrderedList(LoadInterface callback){
-        Collections.sort(mItems, new ComparatorItems(mColumnOrder, mOrderType));
-        notifyItemRangeChanged(0, mItems.size());
+        Collections.sort(mItemsFiltered, new ComparatorItems(mColumnOrder, mOrderType));
+        notifyItemRangeChanged(0, mItemsFiltered.size());
 
-        mMapItems.clear();
+        mMapItemsFiltered.clear();
         int position=0;
-        for (DataGridItem item : mItems){
-            mMapItems.put(item.getMapData(),position);
+        for (DataGridItem item : mItemsFiltered){
+            mMapItemsFiltered.put(item.getMapData(),position);
             position++;
         }
 
@@ -314,10 +341,13 @@ public class HorizontalAdapter extends RecyclerView.Adapter<HorizontalAdapter.It
      * Clear items in Datagrid
      */
     public void clear(){
-        int aux= mItems.size();
+        int aux= mItemsFiltered.size();
+        mItemsFiltered.clear();
+        mMapItemsFiltered.clear();
+        notifyItemRangeRemoved(0,aux);
+
         mItems.clear();
         mMapItems.clear();
-        notifyItemRangeRemoved(0,aux);
     }
 
     public static class ItemHolder extends RecyclerView.ViewHolder{
@@ -325,7 +355,7 @@ public class HorizontalAdapter extends RecyclerView.Adapter<HorizontalAdapter.It
         private HorizontalAdapter parent;
         View viewParent;
         LinearLayout lyColumns;
-        ImageView imgState;
+        LinearLayout lyFixedColumns;
 
         public ItemHolder(View itemView, HorizontalAdapter parent, ScrollManager scrollManager) {
             super(itemView);
@@ -337,24 +367,8 @@ public class HorizontalAdapter extends RecyclerView.Adapter<HorizontalAdapter.It
 
             this.parent = parent;
             lyColumns=(LinearLayout) itemView.findViewById(R.id.lyColumns);
-            imgState=(ImageView) itemView.findViewById(R.id.imgState);
+            lyFixedColumns=(LinearLayout) itemView.findViewById(R.id.lyFixedColumns);
         }
-    }
-
-
-    private int getCellWidth(){
-        Display display = mActivity.getWindowManager().getDefaultDisplay();
-        int displayWidth = display.getWidth();
-        int width=0;
-        width=(int)(displayWidth/3); // Each column has 33% of width
-        return width;
-    }
-
-    public CellProperties getDefaultCellProperties(){
-        return new CellProperties(getCellWidth(),
-                Color.BLACK,
-                16,
-                Gravity.CENTER);
     }
 
     /**
@@ -395,6 +409,46 @@ public class HorizontalAdapter extends RecyclerView.Adapter<HorizontalAdapter.It
      */
     public void setSelectable(boolean isSelectable){
         this.mSelectable=isSelectable;
+    }
+
+
+    public void applyContentFilter(String filterValue) {
+        //Clear items in View
+        mMapItems.clear();
+        mItemsFiltered.clear();
+        notifyDataSetChanged();
+
+
+        for(DataGridItem item : mItems){
+            if(filterValue!=null){
+                //TODO compare objects
+                if(item.getFilterValue().compareTo(filterValue)==0){
+                    mItemsFiltered.add(item);
+                    mMapItems.put(item.getUniqueIdentificator(),mItemsFiltered.size()-1);
+                    notifyDataSetChanged();
+                }
+            } else {
+                mItemsFiltered.add(item);
+                mMapItems.put(item.getUniqueIdentificator(),mItemsFiltered.size()-1);
+                notifyDataSetChanged();
+            }
+        }
+
+        if(filterValue!=null){
+            enableFilter(filterValue);
+        } else {
+            disableFilter();
+        }
+    }
+
+    public void enableFilter(String filterValue ){
+        this.filterActive=true;
+        this.filterValue=filterValue;
+    }
+
+    public void disableFilter(){
+        this.filterActive=false;
+        this.filterValue=null;
     }
 }
 

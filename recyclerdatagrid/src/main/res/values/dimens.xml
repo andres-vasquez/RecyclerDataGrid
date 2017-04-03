@@ -32,4 +32,14 @@
     <dimen name="text_xl">20sp</dimen>
     <dimen name="text_xxl">22sp</dimen>
     <dimen name="text_xxl_count">54sp</dimen>
+
+    <!-- Row list dialog picker -->
+    <dimen name="list_default_height">72dp</dimen>
+    <dimen name="list_icon">72dp</dimen>
+    <dimen name="list_icon_sm">56dp</dimen>
+    <dimen name="list_icon_xs">24dp</dimen>
+    <dimen name="list_elevation">4dp</dimen>
+    <dimen name="margin_top_item_list">8dp</dimen>
+
+
 </resources>

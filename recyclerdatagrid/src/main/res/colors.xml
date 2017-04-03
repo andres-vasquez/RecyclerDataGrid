@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Theme colors -->
+    <color name="colorPrimary">#F5F5F5</color>
+    <color name="colorPrimaryDark">#E0E0E0</color>
+    <color name="colorAccent">#3F51B5</color>
+    <color name="colorBackground">#ececec</color>
+
+
+    <!-- general text colors -->
+    <color name="text">#212121</color>
+    <color name="secondary">#727272</color>
+    <color name="hint">#B8B8B8</color>
+    <color name="dividers">#DADADA</color>
+    <color name="white">#FFFFFF</color>
+
+    <!-- state colors -->
+    <color name="text_error">#D8000C</color>
+    <color name="text_success">#4F8A10</color>
+    <color name="text_warning">#9F6000</color>
+    <color name="text_info">#00529B</color>
+
+    <color name="bkg_error">#FFBABA</color>
+    <color name="bkg_success">#DFF2BF</color>
+    <color name="bkg_warning">#FEEFB3</color>
+    <color name="bkg_info">#BDE5F8</color>
+
+
+    <color name="progress_danger">#EB3025</color>
+    <color name="progress_warning">#FCBF00</color>
+    <color name="progress_success">#32C24D</color>
+    <color name="progress_info">#3F51B5</color>
+
+
+    <!-- general colors for drawer -->
+    <color name="list_background">#F2F2F2</color>
+    <!-- primary colors for drawer -->
+    <color name="list_background_normal">#FCFCFC</color>
+    <!-- secondary colors for drawer -->
+    <color name="list_background_secondary_normal">#F2F2F2</color>
+
+    <color name="switch_selected">#7F7F7F</color>
+
+    <color name="gps_green">#22C441</color>
+    <color name="gps_orange">#FD9C41</color>
+    <color name="gps_red">#CF2A2B</color>
+    <color name="gps_gray">#87888C</color>
+
+</resources>

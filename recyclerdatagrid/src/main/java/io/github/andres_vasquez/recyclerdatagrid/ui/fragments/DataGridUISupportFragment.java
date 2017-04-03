@@ -4,17 +4,28 @@ import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AlertDialog;
+import android.support.v7.app.AppCompatActivity;
+
+import com.google.gson.Gson;
+
+import org.greenrobot.eventbus.EventBus;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 import io.github.andres_vasquez.recyclerdatagrid.R;
+import io.github.andres_vasquez.recyclerdatagrid.models.appClasses.ChoiceItem;
 import io.github.andres_vasquez.recyclerdatagrid.models.appClasses.ColumnItem;
 import io.github.andres_vasquez.recyclerdatagrid.models.appClasses.DataGridProperties;
 import io.github.andres_vasquez.recyclerdatagrid.models.interfaces.FilterColumnInterface;
+import io.github.andres_vasquez.recyclerdatagrid.models.interfaces.FilterRowInterface;
+import io.github.andres_vasquez.recyclerdatagrid.ui.dialog.ListChoiceDialog;
+import io.github.andres_vasquez.recyclerdatagrid.utils.Constants;
 import io.github.andres_vasquez.recyclerdatagrid.utils.GlobalFunctions;
 
 /**
@@ -23,12 +34,16 @@ import io.github.andres_vasquez.recyclerdatagrid.utils.GlobalFunctions;
 
 public class DataGridUISupportFragment extends DataGridPropertiesFragment{
 
-    public Activity mActivity;
+    public AppCompatActivity mActivity;
     public Context mContext;
 
+    //Columns
+    public Map<String,ColumnItem> mapFixedColumns;
     public Map<String,ColumnItem> mapColumns;
     public List<ColumnItem> columns;
 
+    //Filters
+    public List<ChoiceItem> lstChoiceItems;
 
     private ProgressDialog progressDialog;
 
@@ -66,6 +81,51 @@ public class DataGridUISupportFragment extends DataGridPropertiesFragment{
             }
         });
     }
+
+
+    /**
+     * Show pop up for row Filter picker
+     */
+    public void showRowPickerDialog(final FilterRowInterface callback)
+    {
+        if(lstChoiceItems==null){
+            lstChoiceItems=new ArrayList<>();
+        }
+
+        //TODO apply multiple column filters
+        Bundle args=new Bundle();
+        args.putString(Constants.EXTRA_LIST_CHOICE_ITEMS,new Gson().toJson(lstChoiceItems));
+
+        FragmentManager fm = mActivity.getSupportFragmentManager();
+        ListChoiceDialog listChoiceDialog=new ListChoiceDialog().newInstance(
+                Constants.LIST_DIALOG_SINGLE_CHOICE, new ListChoiceDialog.NoticeDialogListener() {
+                    @Override
+                    public void onDialogPositiveClick(List<ChoiceItem> lstItemsSelected) {
+                    }
+                    @Override
+                    public void onDialogNegativeClick() {
+                    }
+                    @Override
+                    public void onDialogItemClick(ChoiceItem itemSelected) {
+                        //Change filter state
+                        //Change
+                        //Update the item selected
+                        for(ChoiceItem item : lstChoiceItems){
+                            if(itemSelected.getId()==item.getId()){
+                                item.setChecked(true);
+                            } else {
+                                item.setChecked(false);
+                            }
+                        }
+
+                        //Send callback to MainActivity
+                        callback.onRowFilterApplied(itemSelected);
+                    }
+                });
+        listChoiceDialog.setArguments(args);
+        listChoiceDialog.show(fm, "listChoiceDialog");
+    }
+
 
     /**
      * Show columns Pickup Dialog
@@ -117,6 +177,5 @@ public class DataGridUISupportFragment extends DataGridPropertiesFragment{
         AlertDialog dialog=alert.create();
         GlobalFunctions.fixDialogMarshmellow(dialog);
         dialog.show();
-
     }
 }

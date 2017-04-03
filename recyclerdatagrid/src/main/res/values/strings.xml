@@ -4,4 +4,8 @@
     <string name="loading">Loading</string>
     <string name="done">Done</string>
     <string name="cancel">Cancel</string>
+
+    <string name="search">Search </string>
+    <string name="none">None</string>
+
 </resources>

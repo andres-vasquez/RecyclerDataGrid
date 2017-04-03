@@ -8,4 +8,7 @@
     <style name="MyCustomHorizontalStyle" parent="AppTheme">
     </style>
 
+    <style name="CustomTheme.Dialog" parent="Theme.AppCompat.DayNight.Dialog">
+    </style>
+
 </resources>

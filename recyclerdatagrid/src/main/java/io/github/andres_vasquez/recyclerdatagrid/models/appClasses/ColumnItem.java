@@ -1,5 +1,7 @@
 package io.github.andres_vasquez.recyclerdatagrid.models.appClasses;
 
+import android.graphics.drawable.Drawable;
+
 import io.github.andres_vasquez.recyclerdatagrid.utils.Constants;
 
 /**
@@ -12,12 +14,15 @@ public class ColumnItem {
     private int columnType;
     private boolean selected;
     private CellProperties cellProperties;
+    private boolean fixed;
+    private int imageRes;
 
     public ColumnItem(int id, String title) {
         this.id = id;
         this.title = title;
         this.columnType= Constants.COLUMN_TYPE_DEFAULT;
         this.selected=true;
+        this.fixed=false;
     }
 
     public ColumnItem(int id, String title, int columnType) {
@@ -25,6 +30,7 @@ public class ColumnItem {
         this.title = title;
         this.columnType = columnType;
         this.selected=true;
+        this.fixed=false;
     }
 
     public ColumnItem(int id, String title, int columnType, boolean selected) {
@@ -32,8 +38,16 @@ public class ColumnItem {
         this.title = title;
         this.columnType = columnType;
         this.selected = selected;
+        this.fixed=false;
     }
 
+    public ColumnItem(int id, int imgRes, String title, boolean selected){
+        this.id=id;
+        this.title=title;
+        this.imageRes=imgRes;
+        this.title=title;
+        this.columnType=Constants.COLUMN_TYPE_IMAGE;
+    }
 
 
     public int getId() {
@@ -75,5 +89,21 @@ public class ColumnItem {
 
     public void setCellProperties(CellProperties cellProperties) {
         this.cellProperties = cellProperties;
+    }
+
+    public boolean isFixed() {
+        return fixed;
+    }
+
+    public void setFixed(boolean fixed) {
+        this.fixed = fixed;
+    }
+
+    public int getImageRes() {
+        return imageRes;
+    }
+
+    public void setImageRes(int imageRes) {
+        this.imageRes = imageRes;
     }
 }

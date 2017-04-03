@@ -52,10 +52,10 @@ public class ScrollManager implements ScrollListener {
             return;
         }
 
-        // update clients
+        // addOrUpdate clients
         for (Object client : clients) {
             View view = (View) client;
-            // don't update sender
+            // don't addOrUpdate sender
             if (view == sender)
                 continue;
 

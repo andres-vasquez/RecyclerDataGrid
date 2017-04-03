@@ -3,6 +3,7 @@ package io.github.andres_vasquez.recyclerdatagrid.ui.fragments;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -24,6 +25,7 @@ import java.util.Map;
 import io.github.andres_vasquez.recyclerdatagrid.R;
 import io.github.andres_vasquez.recyclerdatagrid.controller.listener.ScrollManager;
 import io.github.andres_vasquez.recyclerdatagrid.models.appClasses.CellProperties;
+import io.github.andres_vasquez.recyclerdatagrid.models.appClasses.ChoiceItem;
 import io.github.andres_vasquez.recyclerdatagrid.models.appClasses.ColumnItem;
 import io.github.andres_vasquez.recyclerdatagrid.models.appClasses.DataGridItem;
 import io.github.andres_vasquez.recyclerdatagrid.models.appClasses.DataGridProperties;
@@ -66,6 +68,7 @@ public class DataGridFragment extends DataGridUISupportFragment
 
     // Dynamic Columns */
     private LinearLayout headerDynamic;
+    private LinearLayout lyFixedColumns;
     private LinearLayout lyColumns;
     private RecyclerView recyclerView;
 
@@ -78,7 +81,7 @@ public class DataGridFragment extends DataGridUISupportFragment
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mActivity=getActivity();
+        mActivity=(AppCompatActivity) getActivity();
 
         columns=new ArrayList<>();
         lstHeaderOrderEvent =new ArrayList<HeaderOrderEvent>();
@@ -94,7 +97,8 @@ public class DataGridFragment extends DataGridUISupportFragment
                     columns = gson.fromJson(args.getString(Constants.EXTRA_COLUMNS), listType);
 
                     //Change to map
-                    mapColumns=getColumnsInMap();
+                    mapFixedColumns =getColumnsInMap(true);
+                    mapColumns=getColumnsInMap(false);
                 }
                 catch (Exception e){
                     Log.e("Exception",""+e.getMessage());
@@ -176,7 +180,7 @@ public class DataGridFragment extends DataGridUISupportFragment
             horizontalAdapter=new HorizontalAdapter(mActivity,scrollManager,mapColumns, selectable,
                     rowSelectorStyle);
         } else {
-            horizontalAdapter=new HorizontalAdapter(mActivity,scrollManager,mapColumns);
+            horizontalAdapter=new HorizontalAdapter(mActivity,scrollManager,mapColumns, mapFixedColumns);
         }
 
         if(mClickListener!=null){
@@ -204,11 +208,13 @@ public class DataGridFragment extends DataGridUISupportFragment
      * Creates map of columns with unique identifier (best performance)
      * @return map of columns
      */
-    private Map<String,ColumnItem> getColumnsInMap() {
+    private Map<String,ColumnItem> getColumnsInMap(boolean isFixed) {
         Map<String, ColumnItem> columnItemMap=new LinkedHashMap<>();
         if(columns!=null){
             for(ColumnItem columnItem : columns){
-                columnItemMap.put(columnItem.getTitle(),columnItem);
+                if(columnItem.isFixed()==isFixed){
+                    columnItemMap.put(columnItem.getTitle(),columnItem);
+                }
             }
         }
         return columnItemMap;
@@ -221,6 +227,7 @@ public class DataGridFragment extends DataGridUISupportFragment
     private void initViews(View view){
         //Columns
         headerDynamic=(LinearLayout)view.findViewById(R.id.headerDynamic);
+        lyFixedColumns=(LinearLayout)view.findViewById(R.id.lyFixedColumns);
         lyColumns=(LinearLayout)view.findViewById(R.id.lyColumns);
 
         //List
@@ -231,42 +238,69 @@ public class DataGridFragment extends DataGridUISupportFragment
      * Fill column headers
      */
     private void fillColumnsHeaders() {
-        CustomTemplates templates=new CustomTemplates(mContext);
+        CustomTemplates templates=new CustomTemplates(mActivity);
         lyColumns.removeAllViews();
-        int count=0;
+        lyFixedColumns.removeAllViews();
 
+        int dynamicColumnscount=0;
+
+        //Separate columns in Fixed and dynamic
+        List<ColumnItem> lstColumnsFixed=new ArrayList<>();
         List<ColumnItem> lstColumnsSelected=new ArrayList<>();
         for(ColumnItem column : columns){
-            if(column.isSelected()){
-                lstColumnsSelected.add(column);
+            if(column.isFixed()){
+                lstColumnsFixed.add(column);
+            } else {
+                if(column.isSelected()){
+                    lstColumnsSelected.add(column);
+                }
             }
         }
 
+        //Add fixed columns
+        for(ColumnItem column : lstColumnsFixed){
+            lyFixedColumns.addView(templates.dynamicView(column,
+                    column.getTitle(),
+                    true));
+            lyFixedColumns.addView(templates.separatorLine());
+        }
+
+
+        //Add dynamic columns
         for(ColumnItem column : lstColumnsSelected){
-            String defaultOrder=Constants.NO_ORDER;
-            if(column.getTitle().compareTo(columnOrder)==0){
-                defaultOrder=orderType;
+            if(column.getColumnType()==Constants.COLUMN_TYPE_IMAGE){
+                lyColumns.addView(templates.dynamicView(
+                        column,
+                        column.getTitle(),
+                        true
+                ));
+            } else {
+                //Add order
+                String defaultOrder=Constants.NO_ORDER;
+                if(column.getTitle().compareTo(columnOrder)==0){
+                    defaultOrder=orderType;
+                }
+
+                CellProperties cellProperties=column.getCellProperties();
+                if(cellProperties==null){
+                    cellProperties=templates.getDefaultCellProperties();
+                }
+
+                LinearLayout ly;
+                ly=templates.textFieldOrder(column.getTitle(),
+                        cellProperties.getWidth(),column.getTitle(),defaultOrder);
+                lyColumns.addView(ly);
+                lstHeaderOrderEvent.add(new HeaderOrderEvent(lstHeaderOrderEvent.size()+1,
+                        column.getTitle(),defaultOrder,ly));
             }
 
-            CellProperties cellProperties=column.getCellProperties();
-            if(cellProperties==null){
-                cellProperties=horizontalAdapter.getDefaultCellProperties();
-            }
-
-            LinearLayout ly;
-            ly=templates.textFieldOrder(column.getTitle(),
-                    cellProperties.getWidth(),column.getTitle(),defaultOrder);
-            lyColumns.addView(ly);
-            lstHeaderOrderEvent.add(new HeaderOrderEvent(lstHeaderOrderEvent.size()+1,
-                    column.getTitle(),defaultOrder,ly));
-
-            if(count<lstColumnsSelected.size()-1){
+            if(dynamicColumnscount<lstColumnsSelected.size()-1){
                 lyColumns.addView(templates.separatorLine());
             }
-            count++;
+            dynamicColumnscount++;
         }
 
-        //Adding click event to header
+        //Adding click event to header on Dynamic columns
         for(final HeaderOrderEvent headerOrderEvent : lstHeaderOrderEvent){
             headerOrderEvent.getHeader().setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -275,30 +309,9 @@ public class DataGridFragment extends DataGridUISupportFragment
                             headerOrderEvent.getPosition(),
                             headerOrderEvent.getColumn(),
                             headerOrderEvent.getOrderType()));
-
-                    /*EventBus.getDefault().post(new HeaderOrderEvent(
-                            headerOrderEvent.getPosition(),
-                            headerOrderEvent.getColumn(),
-                            headerOrderEvent.getOrderType()));*/
                 }
             });
         }
-    }
-
-
-    /**
-     * Add row to adapter
-     */
-    public void addRow(Map<String, Object> rowData){
-        DataGridItem dataGridItem=new DataGridItem();
-        dataGridItem.setMapData(rowData);
-        dataGridItem.setFiltered(false);
-        dataGridItem.setFilterValue(null);
-
-        if(uniqueColumnKey!=null){
-            dataGridItem.setUniqueIdentificator(uniqueColumnKey);
-        }
-        horizontalAdapter.add(dataGridItem);
     }
 
 
@@ -354,7 +367,8 @@ public class DataGridFragment extends DataGridUISupportFragment
     public void applyColumnChanges(List<ColumnItem> newColumnsConfiguration) {
         //Save in local variabless
         columns=newColumnsConfiguration;
-        mapColumns=getColumnsInMap();
+        mapFixedColumns =getColumnsInMap(true);
+        mapColumns=getColumnsInMap(false);
 
         //Show loading diaglog before apply changes
         showLoadingDialog();
@@ -392,7 +406,8 @@ public class DataGridFragment extends DataGridUISupportFragment
             columns=dataGridProperties.getColumns();
 
             //Change to map
-            mapColumns=getColumnsInMap();
+            mapFixedColumns =getColumnsInMap(true);
+            mapColumns=getColumnsInMap(false);
         }
 
         //Unique column
@@ -429,7 +444,7 @@ public class DataGridFragment extends DataGridUISupportFragment
     public List<DataGridItem> getSelectedItems(){
         List<DataGridItem> lstDataGridItems=new ArrayList<>();
         if(horizontalAdapter!=null){
-            List<DataGridItem> lstAllItems=horizontalAdapter.getmItems();
+            List<DataGridItem> lstAllItems=horizontalAdapter.getmItemsFiltered();
             if(lstAllItems!=null){
                 for (DataGridItem item : lstAllItems){
                     if(item.isSelected()){
@@ -439,5 +454,38 @@ public class DataGridFragment extends DataGridUISupportFragment
             }
         }
         return lstDataGridItems;
+    }
+
+    /**
+     * Add Hamburguer icon to filter data
+     */
+    public void addFilters(List<ChoiceItem> lstChoiceItems){
+        this.lstChoiceItems=lstChoiceItems;
+    }
+
+    /**
+     * Add filter
+     * @param filterValue
+     */
+    public void applyFilter(String filterValue) {
+        horizontalAdapter.applyContentFilter(filterValue);
+    }
+
+    /**
+     * Clear Datatable
+     */
+    public void clear() {
+        horizontalAdapter.clear();
+    }
+
+    /**
+     * Add or Update row
+     * @param dataGridItem
+     */
+    public void addOrUpdate(DataGridItem dataGridItem) {
+        if(uniqueColumnKey!=null){
+            dataGridItem.setUniqueIdentificator(uniqueColumnKey);
+        }
+        horizontalAdapter.addOrUpdate(dataGridItem);
     }
 }

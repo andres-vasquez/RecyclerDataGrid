@@ -1,6 +1,9 @@
 package io.github.andres_vasquez.recyclerdatagrid.ui.views;
 
+import android.app.Activity;
 import android.content.Context;
+import android.graphics.Color;
+import android.view.Display;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -9,6 +12,8 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import io.github.andres_vasquez.recyclerdatagrid.R;
+import io.github.andres_vasquez.recyclerdatagrid.models.appClasses.CellProperties;
+import io.github.andres_vasquez.recyclerdatagrid.models.appClasses.ColumnItem;
 import io.github.andres_vasquez.recyclerdatagrid.utils.Constants;
 import io.github.andres_vasquez.recyclerdatagrid.utils.GlobalFunctions;
 
@@ -17,10 +22,12 @@ import io.github.andres_vasquez.recyclerdatagrid.utils.GlobalFunctions;
  */
 
 public class CustomTemplates {
+    private Activity mActivity;
     private Context mContext;
 
-    public CustomTemplates(Context mContext) {
-        this.mContext = mContext;
+    public CustomTemplates(Activity mActivity) {
+        this.mActivity=mActivity;
+        this.mContext = mActivity;
     }
 
     /**
@@ -121,4 +128,105 @@ public class CustomTemplates {
         ly.addView(imageView);
         return ly;
     }
+
+    /**
+     * Create dynamic cell View
+     * @param columnItem column Item
+     * @param value value to fill the text
+     * @return
+     */
+    public View dynamicView(ColumnItem columnItem, Object value, boolean isHeader){
+        View view=new View(mContext);
+        CellProperties cellProperties=columnItem.getCellProperties();
+        if(cellProperties==null){
+            cellProperties=getDefaultCellProperties();
+        }
+
+        if(isHeader){
+            if(columnItem.isFixed()){
+                LinearLayout.LayoutParams params=new LinearLayout.LayoutParams(cellProperties.getWidth(),
+                        ViewGroup.LayoutParams.WRAP_CONTENT);
+
+                TextView textView=new TextView(mContext);
+                textView.setLayoutParams(params);
+                textView.setGravity(cellProperties.getGravity());
+                textView.setTextColor(cellProperties.getTextColor());
+                textView.setTextSize(cellProperties.getTextSize());
+                if(value!=null){
+                    textView.setText(value.toString());
+                } else {
+                    textView.setText("");
+                }
+                view=textView;
+            }
+        } else {
+            if(columnItem.getColumnType()!=Constants.COLUMN_TYPE_IMAGE ){
+                LinearLayout.LayoutParams params=new LinearLayout.LayoutParams(cellProperties.getWidth(),
+                        ViewGroup.LayoutParams.WRAP_CONTENT);
+
+                TextView textView=new TextView(mContext);
+                textView.setLayoutParams(params);
+                textView.setGravity(cellProperties.getGravity());
+                textView.setTextColor(cellProperties.getTextColor());
+                textView.setTextSize(cellProperties.getTextSize());
+                if(value!=null){
+                    textView.setText(value.toString());
+                } else {
+                    textView.setText("");
+                }
+                view=textView;
+            } else {
+                //Image container
+                LinearLayout lyImageParent=new LinearLayout(mContext);
+                LinearLayout.LayoutParams imageParentParams=new LinearLayout.LayoutParams(
+                        cellProperties.getWidth(),
+                        ViewGroup.LayoutParams.MATCH_PARENT);
+                lyImageParent.setLayoutParams(imageParentParams);
+                lyImageParent.setGravity(Gravity.CENTER);
+                lyImageParent.setPadding(0,2,0,2);
+
+                LinearLayout.LayoutParams imageParams=new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
+                        ViewGroup.LayoutParams.MATCH_PARENT);
+                ImageView imageView=new ImageView(mContext);
+                imageView.setAdjustViewBounds(true);
+                imageView.setLayoutParams(imageParams);
+
+                int imageResource=0;
+                try {
+                    imageResource=Integer.parseInt(value.toString());
+                    imageView.setImageResource(imageResource);
+                }catch (NumberFormatException ex){
+
+                }
+
+                lyImageParent.addView(imageView);
+                view=lyImageParent;
+            }
+        }
+        return view;
+    }
+
+    /**
+     * Get width of cell with percentage
+     * @return
+     */
+    public int getCellWidth(){
+        Display display = mActivity.getWindowManager().getDefaultDisplay();
+        int displayWidth = display.getWidth();
+        int width=0;
+        width=(int)(displayWidth/3); // Each column has 33% of width
+        return width;
+    }
+
+    /**
+     * Get default cellproperties
+     * @return
+     */
+    public CellProperties getDefaultCellProperties(){
+        return new CellProperties(getCellWidth(),
+                Color.BLACK,
+                16,
+                Gravity.CENTER);
+    }
+
 }

@@ -12,45 +12,18 @@
         android:orientation="horizontal">
 
         <LinearLayout
-            android:layout_width="0dp"
-            android:layout_weight="1"
+            android:id="@+id/lyFixedColumns"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center">
-
-            <ImageView
-                android:id="@+id/imgState"
-                android:layout_width="match_parent"
-                android:maxWidth="@dimen/filter_imageview"
-                android:layout_height="wrap_content"
-                android:adjustViewBounds="true"
-                android:src="@drawable/icon_wrong"
-                android:padding="@dimen/margin_text_space"/>
-
-
-            <TextView
-                android:id="@+id/lblCountRead"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center"
-                android:visibility="gone"/>
-
-            <View
-                android:layout_width="1dp"
-                android:layout_height="match_parent"
-                android:background="@color/hint"
-                android:layout_marginStart="@dimen/margin_text_sm_space"
-                android:layout_marginLeft="@dimen/margin_text_sm_space"
-                android:layout_marginEnd="@dimen/margin_text_sm_space"
-                android:layout_marginRight="@dimen/margin_text_sm_space"/>
 
         </LinearLayout>
 
         <io.github.andres_vasquez.recyclerdatagrid.ui.views.SyncedScrollView
             android:id="@+id/scroll"
             android:scrollbars="none"
-            android:layout_width="0dp"
-            android:layout_weight="10"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:clickable="false"
             style="@style/MyCustomHorizontalStyle">

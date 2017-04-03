@@ -8,17 +8,17 @@ import java.util.Map;
 
 public class DataGridItem {
 
-    private Object uniqueIdentificator;
+    private String uniqueIdentificator;
     private Map<String,Object> mapData;
     private boolean filtered;
-    private Object filterValue;
+    private String filterValue;
     private boolean selected;
 
-    public Object getUniqueIdentificator() {
+    public String getUniqueIdentificator() {
         return uniqueIdentificator;
     }
 
-    public void setUniqueIdentificator(Object uniqueIdentificator) {
+    public void setUniqueIdentificator(String uniqueIdentificator) {
         this.uniqueIdentificator = uniqueIdentificator;
     }
 
@@ -38,11 +38,11 @@ public class DataGridItem {
         this.filtered = filtered;
     }
 
-    public Object getFilterValue() {
+    public String getFilterValue() {
         return filterValue;
     }
 
-    public void setFilterValue(Object filterValue) {
+    public void setFilterValue(String filterValue) {
         this.filterValue = filterValue;
     }
 

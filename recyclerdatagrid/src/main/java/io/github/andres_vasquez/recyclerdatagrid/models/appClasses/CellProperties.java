@@ -9,6 +9,7 @@ public class CellProperties {
     private int textColor;
     private int textSize;
     private int gravity;
+    private int type;
 
     public CellProperties(int width, int textColor, int textSize, int gravity) {
         this.width = width;
